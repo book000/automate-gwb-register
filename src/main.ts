@@ -10,6 +10,10 @@ async function main() {
   const personalAccessToken = process.env.PERSONAL_ACCESS_TOKEN
   if (!discordWebhookUrl || !personalAccessToken) {
     logger.error('❌ Required environment variables are not set')
+    logger.error(`  DISCORD_WEBHOOK_URL: ${discordWebhookUrl ? '✅' : '❌'}`)
+    logger.error(
+      `  PERSONAL_ACCESS_TOKEN: ${personalAccessToken ? '✅' : '❌'}`
+    )
     process.exitCode = 1
     return
   }
@@ -33,7 +37,10 @@ async function main() {
     per_page: 100,
   })
 
-  const filteredRepos = repos.filter((repo) => repo.archived === false)
+  // アーカイブとフォークを除外 (オリジナルのリポジトリのみ)
+  const filteredRepos = repos.filter(
+    (repo) => repo.archived === false && !repo.fork
+  )
 
   for (const repo of filteredRepos) {
     logger.info(`📦 ${repo.full_name}`)
