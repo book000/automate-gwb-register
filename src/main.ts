@@ -18,7 +18,8 @@ async function main() {
     logger.warn('⚠️ WEBHOOK_SECRET is not set')
   }
 
-  const baseUrl = process.env.GWB_BASE_URL || 'https://github-webhook-bridge.vercel.app/'
+  const baseUrl =
+    process.env.GWB_BASE_URL ?? 'https://github-webhook-bridge.vercel.app/'
   const url = `${baseUrl}?url=${discordWebhookUrl}`
 
   const octokit = new Octokit({ auth: personalAccessToken })
