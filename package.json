@@ -1,0 +1,45 @@
+{
+  "name": "automate-gwb-register",
+  "version": "0.0.0",
+  "description": "Automatically register github-webhook-bridge webhooks in the user's repository.",
+  "homepage": "https://github.com/book000/automate-gwb-register",
+  "bugs": {
+    "url": "https://github.com/book000/automate-gwb-register/issues"
+  },
+  "license": "MIT",
+  "author": "Tomachi <tomachi@tomacheese.com>",
+  "private": true,
+  "main": "dist/main.js",
+  "repository": {
+    "url": "git@github.com:book000/automate-gwb-register.git",
+    "type": "git"
+  },
+  "scripts": {
+    "fix:prettier": "prettier --write src",
+    "lint:eslint": "eslint . -c eslint.config.mjs",
+    "dev": "tsx watch ./src/main.ts",
+    "fix": "run-z fix:prettier fix:eslint",
+    "preinstall": "npx only-allow pnpm",
+    "lint:tsc": "tsc",
+    "start": "tsx ./src/main.ts",
+    "lint:prettier": "prettier --check src",
+    "fix:eslint": "eslint . -c eslint.config.mjs --fix",
+    "lint": "run-z lint:prettier,lint:eslint,lint:tsc"
+  },
+  "devDependencies": {
+    "@book000/eslint-config": "1.7.13",
+    "@book000/node-utils": "1.13.159",
+    "@octokit/rest": "21.0.0",
+    "@types/node": "20.14.10",
+    "eslint": "9.6.0",
+    "eslint-config-standard": "17.1.0",
+    "eslint-plugin-import": "2.29.1",
+    "eslint-plugin-n": "17.9.0",
+    "eslint-plugin-promise": "6.4.0",
+    "prettier": "3.3.2",
+    "run-z": "2.0.0",
+    "tsx": "4.16.2",
+    "typescript": "5.5.3"
+  },
+  "packageManager": "pnpm@9.4.0"
+}
