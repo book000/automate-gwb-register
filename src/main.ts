@@ -7,7 +7,7 @@ async function main() {
   // environment variables
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL
   const webhookSecret = process.env.WEBHOOK_SECRET
-  const personalAccessToken = process.env.GITHUB_PERSONAL_ACCESS_TOKEN
+  const personalAccessToken = process.env.PERSONAL_ACCESS_TOKEN
   if (!discordWebhookUrl || !personalAccessToken) {
     logger.error('❌ Required environment variables are not set')
     process.exitCode = 1
