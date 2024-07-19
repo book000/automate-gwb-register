@@ -24,7 +24,29 @@ async function main() {
 
   const baseUrl =
     process.env.GWB_BASE_URL ?? 'https://github-webhook-bridge.vercel.app/'
-  const url = `${baseUrl}?url=${discordWebhookUrl}`
+  const path = process.env.GWB_PATH ?? ''
+  const query = process.env.GWB_QUERY ?? '?url={url}'
+
+  const url = `${baseUrl}${path}${query}`.replace('{url}', discordWebhookUrl)
+
+  // URLの比較モード (ベースURL一致、または完全一致)
+  const checkMode = process.env.GWB_CHECK_MODE ?? 'BASE_URL'
+  if (!['BASE_URL', 'FULL_URL'].includes(checkMode)) {
+    logger.error('❌ GWB_CHECK_MODE is invalid. Must be BASE_URL or FULL_URL')
+    process.exitCode = 1
+    return
+  }
+
+  // 設定情報の表示
+  logger.info('🔧 Configuration')
+  logger.info(`  DISCORD_WEBHOOK_URL: ${discordWebhookUrl}`)
+  logger.info(`  WEBHOOK_SECRET: ${webhookSecret}`)
+  logger.info(`  PERSONAL_ACCESS_TOKEN: ${personalAccessToken}`)
+  logger.info(`  GWB_BASE_URL: ${baseUrl}`)
+  logger.info(`  GWB_PATH: ${path}`)
+  logger.info(`  GWB_QUERY: ${query}`)
+  logger.info(`  URL: ${url}`)
+  logger.info(`  GWB_CHECK_MODE: ${checkMode}`)
 
   const octokit = new Octokit({ auth: personalAccessToken })
 
@@ -52,12 +74,30 @@ async function main() {
     })
 
     const filteredHooks = hooks.filter((hook) =>
-      hook.config.url?.startsWith(baseUrl)
+      checkMode === 'FULL_URL'
+        ? hook.config.url === url
+        : hook.config.url?.startsWith(baseUrl)
     )
     if (filteredHooks.length > 0) {
       // already exists, skip
       logger.info('⏭️ Webhook already exists, skip')
       continue
+    }
+
+    // FULL_URLモードの場合、BASE_URLで始まるWebhookを削除
+    if (checkMode === 'FULL_URL') {
+      const baseHooks = hooks.filter(
+        (hook) =>
+          hook.config.url?.startsWith(baseUrl) && hook.config.url !== url
+      )
+      for (const hook of baseHooks) {
+        logger.info(`🚮 Remove webhook (hook_id=${hook.id})`)
+        await octokit.rest.repos.deleteWebhook({
+          owner: repo.owner.login,
+          repo: repo.name,
+          hook_id: hook.id,
+        })
+      }
     }
 
     // create webhook
