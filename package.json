@@ -31,7 +31,7 @@
     "@book000/node-utils": "1.13.354",
     "@octokit/rest": "21.0.2",
     "@types/node": "22.9.1",
-    "eslint": "9.14.0",
+    "eslint": "9.15.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-n": "17.13.2",
