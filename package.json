@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@book000/eslint-config": "1.9.8",
-    "@book000/node-utils": "1.18.26",
+    "@book000/node-utils": "1.18.27",
     "@octokit/rest": "22.0.0",
     "@types/node": "22.15.32",
     "eslint": "9.29.0",
