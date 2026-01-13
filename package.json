@@ -30,7 +30,7 @@
     "@book000/eslint-config": "1.12.33",
     "@book000/node-utils": "1.24.16",
     "@octokit/rest": "22.0.1",
-    "@types/node": "24.10.4",
+    "@types/node": "24.10.5",
     "eslint": "9.39.2",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.32.0",
