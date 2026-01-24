@@ -13,7 +13,21 @@
 - 前提・仮定・不確実性を明示し、仮定を事実のように扱わない。
 
 ## プロジェクト概要
-- 目的: Automatically register [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks in the user's repository.
+CLI tool to automatically register github-webhook-bridge webhooks in user repositories, automating GitHub webhook configuration.
+
+### 技術スタック
+- **言語**: TypeScript
+- **フレームワーク**: @octokit/rest
+- **パッケージマネージャー**: pnpm@10.28.1
+- **主要な依存関係**:
+  - production:
+    - @octokit/rest@22.0.1
+  - development:
+    - @book000/eslint-config@1.12.40
+    - @book000/node-utils@1.24.32
+    - @types/node@24.10.9
+    - typescript@5.9.3
+    - prettier@3.8.0
 
 ## 重要ルール
 - 会話言語: 日本語
@@ -42,32 +56,59 @@
 - TypeScript 使用時は `skipLibCheck` で回避しない。
 - 関数やインターフェースには docstring（JSDoc など）を記載する。
 
+### コーディング規約
+- **language**: TypeScript
+- **target**: ES2020, CommonJS
+- **tsconfig**: Strict mode, source maps, path alias @/*
+- **eslint**: Uses @book000/eslint-config
+- **prettier**: 80 char width, single quotes, no semicolons
+
 ## 相談ルール
 - Codex CLI: 実装レビュー、局所設計、整合性確認に使う。
 - Gemini CLI: 外部仕様や最新情報の確認に使う。
 - 他エージェントの指摘は黙殺せず、採用または理由を明記して不採用とする。
 
-## 開発コマンド
+### 開発コマンド
 ```bash
-# 依存関係のインストール
-pnpm install
+# dev
+tsx watch ./src/main.ts
 
-# 開発
-pnpm dev
+# start
+tsx ./src/main.ts
 
-# Lint
-pnpm lint
+# lint
+run-z lint:prettier,lint:eslint,lint:tsc
+
+# fix
+run-z fix:prettier fix:eslint
+
 ```
 
-## アーキテクチャと主要ファイル
+### プロジェクト構造
+**ルートファイル:**
+- `tsconfig.json`
+- `eslint.config.mjs`
+- `.prettierrc.yml`
+- `package.json`
+
+**主要ディレクトリ:**
+- `src/`
+- `.devcontainer/`
+- `dist/`
+
+**重要ファイル:**
+- `src/main.ts`
 
 ## 実装パターン
+- 既存のコードパターンに従う。
+- プロジェクト固有の実装ガイドラインがある場合はそれに従う。
 
 ## テスト
 - 方針: 変更内容に応じてテストを追加する。
 
 ## ドキュメント更新ルール
 - 更新タイミング: 実装確定後、同一コミットまたは追加コミットで更新する。
+- README、API ドキュメント、コメント等は常に最新状態を保つ。
 
 ## 作業チェックリスト
 
@@ -98,3 +139,16 @@ pnpm lint
 6. PR 本文の崩れがないことを確認する。
 
 ## リポジトリ固有
+- **type**: CLI Tool
+- **entry_point**: src/main.ts
+- **purpose**: GitHub webhook automation
+**environment_variables:**
+  - DISCORD_WEBHOOK_URL (required)
+  - WEBHOOK_SECRET (optional but recommended)
+  - GITHUB_PERSONAL_ACCESS_TOKEN (required)
+  - GWB_BASE_URL (default: https://github-webhook-bridge.vercel.app/)
+  - GWB_PATH
+  - GWB_QUERY (default: ?url={url})
+  - GWB_CHECK_MODE (BASE_URL or FULL_URL)
+**dependencies_custom:**
+  - @book000/node-utils - Internal utility library

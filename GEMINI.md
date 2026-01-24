@@ -15,7 +15,21 @@
 - 日本語と英数字の間には半角スペースを入れる。
 
 ## プロジェクト概要
-- 目的: Automatically register github-webhook-bridge webhooks in the user's repository.
+CLI tool to automatically register github-webhook-bridge webhooks in user repositories, automating GitHub webhook configuration.
+
+### 技術スタック
+- **言語**: TypeScript
+- **フレームワーク**: @octokit/rest
+- **パッケージマネージャー**: pnpm@10.28.1
+- **主要な依存関係**:
+  - production:
+    - @octokit/rest@22.0.1
+  - development:
+    - @book000/eslint-config@1.12.40
+    - @book000/node-utils@1.24.32
+    - @types/node@24.10.9
+    - typescript@5.9.3
+    - prettier@3.8.0
 
 ## コーディング規約
 - フォーマット: 既存設定（ESLint / Prettier / formatter）に従う。
@@ -23,16 +37,20 @@
 - コメント言語: 日本語
 - エラーメッセージ: 英語
 
-## 開発コマンド
+### 開発コマンド
 ```bash
-# 依存関係のインストール
-pnpm install
+# dev
+tsx watch ./src/main.ts
 
-# 開発
-pnpm dev
+# start
+tsx ./src/main.ts
 
-# Lint
-pnpm lint
+# lint
+run-z lint:prettier,lint:eslint,lint:tsc
+
+# fix
+run-z fix:prettier fix:eslint
+
 ```
 
 ## 注意事項
@@ -41,3 +59,16 @@ pnpm lint
 - 既存のプロジェクトルールがある場合はそれを優先する。
 
 ## リポジトリ固有
+- **type**: CLI Tool
+- **entry_point**: src/main.ts
+- **purpose**: GitHub webhook automation
+**environment_variables:**
+  - DISCORD_WEBHOOK_URL (required)
+  - WEBHOOK_SECRET (optional but recommended)
+  - GITHUB_PERSONAL_ACCESS_TOKEN (required)
+  - GWB_BASE_URL (default: https://github-webhook-bridge.vercel.app/)
+  - GWB_PATH
+  - GWB_QUERY (default: ?url={url})
+  - GWB_CHECK_MODE (BASE_URL or FULL_URL)
+**dependencies_custom:**
+  - @book000/node-utils - Internal utility library

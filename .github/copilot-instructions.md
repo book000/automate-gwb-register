@@ -1,7 +1,7 @@
 # GitHub Copilot Instructions
 
 ## プロジェクト概要
-- 目的: Automatically register github-webhook-bridge webhooks in the user's repository.
+CLI tool to automatically register github-webhook-bridge webhooks in user repositories, automating GitHub webhook configuration.
 
 ## 共通ルール
 - 会話は日本語で行う。
@@ -12,7 +12,7 @@
 
 ## 技術スタック
 - 言語: TypeScript
-- パッケージマネージャー: pnpm
+- パッケージマネージャー: pnpm@10.28.1
 
 ## コーディング規約
 - フォーマット: 既存設定（ESLint / Prettier / formatter）に従う。
@@ -23,16 +23,20 @@
 - TypeScript 使用時は strict 前提とし、`skipLibCheck` で回避しない。
 - 関数やインターフェースには docstring（JSDoc など）を記載する。
 
-## 開発コマンド
+### 開発コマンド
 ```bash
-# 依存関係のインストール
-pnpm install
+# dev
+tsx watch ./src/main.ts
 
-# 開発
-pnpm dev
+# start
+tsx ./src/main.ts
 
-# Lint
-pnpm lint
+# lint
+run-z lint:prettier,lint:eslint,lint:tsc
+
+# fix
+run-z fix:prettier fix:eslint
+
 ```
 
 ## テスト方針
@@ -43,5 +47,20 @@ pnpm lint
 - ログに機密情報を出力しない。
 
 ## ドキュメント更新
+- 実装確定後、同一コミットまたは追加コミットで更新する。
+- README、API ドキュメント、コメント等は常に最新状態を保つ。
 
 ## リポジトリ固有
+- **type**: CLI Tool
+- **entry_point**: src/main.ts
+- **purpose**: GitHub webhook automation
+**environment_variables:**
+  - DISCORD_WEBHOOK_URL (required)
+  - WEBHOOK_SECRET (optional but recommended)
+  - GITHUB_PERSONAL_ACCESS_TOKEN (required)
+  - GWB_BASE_URL (default: https://github-webhook-bridge.vercel.app/)
+  - GWB_PATH
+  - GWB_QUERY (default: ?url={url})
+  - GWB_CHECK_MODE (BASE_URL or FULL_URL)
+**dependencies_custom:**
+  - @book000/node-utils - Internal utility library

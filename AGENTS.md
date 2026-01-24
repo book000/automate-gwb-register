@@ -25,3 +25,16 @@
 - ログに機密情報を出力しない。
 
 ## リポジトリ固有
+- **type**: CLI Tool
+- **entry_point**: src/main.ts
+- **purpose**: GitHub webhook automation
+**environment_variables:**
+  - DISCORD_WEBHOOK_URL (required)
+  - WEBHOOK_SECRET (optional but recommended)
+  - GITHUB_PERSONAL_ACCESS_TOKEN (required)
+  - GWB_BASE_URL (default: https://github-webhook-bridge.vercel.app/)
+  - GWB_PATH
+  - GWB_QUERY (default: ?url={url})
+  - GWB_CHECK_MODE (BASE_URL or FULL_URL)
+**dependencies_custom:**
+  - @book000/node-utils - Internal utility library
