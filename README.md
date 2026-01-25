@@ -8,7 +8,7 @@ Automatically register [github-webhook-bridge](https://github.com/book000/github
   - Required
 - `WEBHOOK_SECRET`: Utilized as a secret token for securing webhooks, ensuring that the sender of the webhook payload is actually GitHub.
   - Optional, but strongly recommended to be set
-- `GITHUB_PERSONAL_ACCESS_TOKEN`: Required for authenticating with the GitHub API to fetch user repositories and manage webhooks.
+- `PERSONAL_ACCESS_TOKEN`: Required for authenticating with the GitHub API to fetch user repositories and manage webhooks.
 - `GWB_BASE_URL`: Specifies the base URL of the GitHub Webhook Bridge service. If not set, it defaults to `https://github-webhook-bridge.vercel.app/`. This service is used to bridge GitHub webhooks to other services like Discord.
   - Default: `https://github-webhook-bridge.vercel.app/`
 - `GWB_PATH`: Webhook Request Destination

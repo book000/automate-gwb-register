@@ -87,7 +87,7 @@ pnpm fix
 
 - **環境変数**: `DISCORD_WEBHOOK_URL` と `PERSONAL_ACCESS_TOKEN` は必須。`.env` ファイルで管理し、Git にコミットしない。
 - **認証情報**: GitHub Personal Access Token は `.env` ファイルで管理し、絶対に Git にコミットしない。
-- **ログ出力**: ログに認証情報や Discord Webhook URL を出力する場合は注意する。
+- **ログ出力**: 設定情報をログに出力する際は、Personal Access Token や Webhook シークレット、Discord Webhook URL などの認証情報を平文で出力しない。必ずマスクするか、存在有無などの非機密なメタ情報のみをログに出すこと。
 
 ## リポジトリ固有
 
@@ -99,9 +99,9 @@ pnpm fix
 - `PERSONAL_ACCESS_TOKEN`: GitHub API 認証トークン（**必須**）
 - `WEBHOOK_SECRET`: Webhook シークレット（**推奨**）
 - `GWB_BASE_URL`: GitHub Webhook Bridge のベース URL（デフォルト: `https://github-webhook-bridge.vercel.app/`）
-- `GWB_PATH`: Webhook リクエストパス
-- `GWB_QUERY`: Webhook リクエストクエリパラメータ
-- `GWB_CHECK_MODE`: Webhook 設定の比較モード（`BASE_URL` または `FULL_URL`）
+- `GWB_PATH`: Webhook リクエストパス（デフォルト: 空文字列）
+- `GWB_QUERY`: Webhook リクエストクエリパラメータ（デフォルト: `?url={url}`）
+- `GWB_CHECK_MODE`: Webhook 設定の比較モード（`BASE_URL` または `FULL_URL`、デフォルト: `BASE_URL`）
 
 ### 対象リポジトリ
 
