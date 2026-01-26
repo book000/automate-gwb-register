@@ -13,6 +13,7 @@
 - **コミット規約**: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
   - `<type>(<scope>): <description>` 形式
   - `<description>` は日本語で記載
+  - 例: `feat: Webhook 登録機能を追加`
 - **日本語と英数字の間**: 半角スペースを挿入
 
 ## プロジェクト概要

@@ -23,7 +23,7 @@
 1. **プロジェクト理解**: `README.md` やソースコードを読み、目的と構造を理解する。
 2. **依存関係インストール**: `pnpm install` を実行する。
 3. **変更実装**: プロジェクトのコーディング規約（Lint/Format）に従い実装する。
-4. **検証**: `pnpm lint` および動作確認を行う。
+4. **検証**: `pnpm lint`、`pnpm run lint:tsc`（TypeScript 型チェック）、および `pnpm start` または `pnpm dev` による動作確認を行う。
 
 ## セキュリティ / 機密情報
 - **認証情報**: `PERSONAL_ACCESS_TOKEN` や `WEBHOOK_SECRET`、`DISCORD_WEBHOOK_URL` などの機密情報は絶対に Git にコミットしない。
@@ -33,3 +33,9 @@
 - **技術スタック**: TypeScript, Node.js
 - **主要ファイル**: `src/main.ts` (単一ファイル構成)
 - **環境変数**: `.env` ファイルで管理（必須: `DISCORD_WEBHOOK_URL`, `PERSONAL_ACCESS_TOKEN`）
+- **Webhook 設定モード**（`GWB_CHECK_MODE`）:
+  - `BASE_URL`: ベース URL が一致する Webhook が存在すればスキップ
+  - `FULL_URL`: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
+- **エラーメッセージスタイル**: 絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用し、既存スタイルに準拠する
+- **TypeScript 制約**: `skipLibCheck` の使用は禁止
+- **ログ出力**: 認証情報や Webhook URL をログに出力する際は適切にマスキングする

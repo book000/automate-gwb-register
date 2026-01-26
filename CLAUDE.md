@@ -21,6 +21,7 @@
 ## 重要ルール
 - **会話言語**: 日本語
 - **コミット規約**: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+  - 形式: `<type>(<scope>): <description>`（例: `feat(webhook): Webhook 登録機能を追加`）
   - `<description>` は日本語で記載
 - **コメント言語**: 日本語（docstring 含む）
 - **エラーメッセージ**: 英語（ユーザー向けログは絵文字付き日本語も可）
@@ -36,6 +37,7 @@
 - **エラーメッセージ**: 先頭に絵文字がある場合は統一する
 - **TypeScript**: `skipLibCheck` は使用禁止
 - **Docstring**: 関数やインターフェースには日本語で docstring を記述する
+- **命名規則**: 変数・関数は camelCase、定数は UPPER_SNAKE_CASE、クラスは PascalCase
 
 ## 相談ルール
 - **Codex CLI**: 実装レビュー、局所的な設計相談、整合性確認に利用
@@ -114,4 +116,11 @@ pnpm run lint:tsc
 
 ## リポジトリ固有
 - **アーカイブ/フォーク**: `archived: true` または `fork: true` のリポジトリは Webhook 設定の対象外とする
-- **環境変数**: `DISCORD_WEBHOOK_URL` と `PERSONAL_ACCESS_TOKEN` は必須
+- **環境変数**: 
+  - 必須: `DISCORD_WEBHOOK_URL`（Discord Webhook 転送先 URL）、`PERSONAL_ACCESS_TOKEN`（GitHub API 認証トークン）
+  - オプション: `WEBHOOK_SECRET`、`GWB_BASE_URL`（デフォルト: `https://github-webhook-bridge.vercel.app/`）、`GWB_PATH`、`GWB_QUERY`（デフォルト: `?url={url}`）、`GWB_CHECK_MODE`（デフォルト: `BASE_URL`）
+- **Webhook 設定モード**（`GWB_CHECK_MODE`）:
+  - `BASE_URL` モード: ベース URL が一致する Webhook が存在すればスキップ
+  - `FULL_URL` モード: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
+- **エラーメッセージスタイル**: 絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用してユーザーフレンドリーなログを出力する。既存スタイルに準拠する。
+- **ログ出力時の認証情報マスキング**: ログに認証情報や Webhook URL をそのまま出力しないよう、適切にマスキングする。セキュリティ上重要。

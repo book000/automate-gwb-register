@@ -7,7 +7,7 @@
 
 ## 共通ルール
 - 会話は日本語で行う。
-- PR とコミットは [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) に従う。
+- PR とコミットは [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) に従い、`<type>(<scope>): <description>` 形式で記述する（例: `feat(webhook): Webhook 登録機能を追加`）。
 - 日本語と英数字の間には半角スペースを入れる。
 
 ## 技術スタック
@@ -20,6 +20,8 @@
 - フォーマット: Prettier
 - Lint: ESLint (`@book000/eslint-config`)
 - 命名規則: camelCase (変数・関数), PascalCase (クラス), UPPER_SNAKE_CASE (定数)
+- コメント: 日本語で記述
+- エラーメッセージ: 英語で記述（ただし、ユーザー向けログは絵文字付き日本語も可）
 - TypeScript: `skipLibCheck` の使用禁止
 
 ## 開発コマンド
@@ -58,3 +60,9 @@ pnpm run lint:tsc
 ## リポジトリ固有
 - 単一ファイル構成 (`src/main.ts`) を維持する。
 - アーカイブ済み、またはフォークされたリポジトリは処理対象外。
+- 環境変数 `DISCORD_WEBHOOK_URL` と `PERSONAL_ACCESS_TOKEN` は必須。
+- `GWB_CHECK_MODE` の動作:
+  - `BASE_URL` モード: ベース URL が一致する Webhook が存在すればスキップ
+  - `FULL_URL` モード: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
+- エラーメッセージは絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用してユーザーフレンドリーに出力する。
+- ログ出力時に認証情報や Webhook URL をそのまま出力しないよう、適切にマスキングする。
