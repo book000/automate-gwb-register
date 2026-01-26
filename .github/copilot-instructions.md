@@ -51,7 +51,7 @@ pnpm run lint:tsc
 
 ## セキュリティ / 機密情報
 - `DISCORD_WEBHOOK_URL`, `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` などの認証情報は `.env` で管理し、Git にコミットしない。
-- ログに認証情報や Webhook URL をそのまま出力しない。
+- ログに認証情報を出力する際は注意する（現在のコードでは設定確認のため平文で出力している）。
 
 ## ドキュメント更新
 - `README.md`: 機能追加や環境変数の変更時に更新
@@ -65,4 +65,4 @@ pnpm run lint:tsc
   - `BASE_URL` モード: ベース URL が一致する Webhook が存在すればスキップ
   - `FULL_URL` モード: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
 - エラーメッセージは絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用してユーザーフレンドリーに出力する。
-- ログ出力時に認証情報や Webhook URL をそのまま出力しないよう、適切にマスキングする。
+- 環境変数の詳細（`DISCORD_WEBHOOK_URL`、`PERSONAL_ACCESS_TOKEN`、`WEBHOOK_SECRET` など）はコンフィグレーション確認のために平文でログ出力される。

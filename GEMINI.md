@@ -13,7 +13,7 @@
 - **コミット規約**: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
   - `<type>(<scope>): <description>` 形式
   - `<description>` は日本語で記載
-  - 例: `feat: Webhook 登録機能を追加`
+  - 例: `feat(webhook): Webhook 登録機能を追加`
 - **日本語と英数字の間**: 半角スペースを挿入
 
 ## プロジェクト概要
@@ -59,7 +59,7 @@ pnpm run lint:tsc
 ### セキュリティ / 機密情報
 - **環境変数**: `DISCORD_WEBHOOK_URL` と `PERSONAL_ACCESS_TOKEN` は必須。`.env` ファイルで管理し、Git にコミットしない。
 - **認証情報**: GitHub Personal Access Token は `.env` ファイルで管理し、絶対に Git にコミットしない。
-- **ログ出力**: ログに認証情報や Discord Webhook URL を出力する場合は注意する。
+- **ログ出力**: ログに認証情報や Discord Webhook URL は、コンフィグレーション確認のために平文でログ出力される（現在のコード実装）。
 
 ### 既存ルールの優先
 - プロジェクトに既存のコーディング規約がある場合は、それを優先する
