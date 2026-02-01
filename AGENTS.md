@@ -1,120 +1,44 @@
-# AI エージェント向け作業方針
+# AI Agents Guidelines
 
 ## 目的
-
-このドキュメントは、一般的な AI エージェントがこのプロジェクトで作業する際の基本方針とルールを定義します。
+このドキュメントは、このリポジトリで作業するすべての AI エージェント（汎用エージェント）向けの基本方針とルールを定義します。
 
 ## 基本方針
-
 - **会話言語**: 日本語
-- **コード内コメント**: 日本語
-- **エラーメッセージ**: 英語
-- **コミット規約**: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) に従う
-  - 形式: `<type>(<scope>): <description>`
-  - `<description>` は日本語で記載
-  - 例: `feat: Webhook 登録機能を追加`
+- **コメント言語**: 日本語
+- **エラーメッセージ**: 英語（ユーザー向けは日本語可）
+- **コミット規約**: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+  - `<description>` は日本語
+- **日本語と英数字の間**: 半角スペースを挿入
 
 ## 判断記録のルール
-
-すべての判断は、以下の形式で記録すること：
-
-1. **判断内容の要約**: 何を決定したか
-2. **検討した代替案**: どのような選択肢があったか
-3. **採用しなかった案とその理由**: なぜその選択肢を選ばなかったか
-4. **前提条件・仮定・不確実性**: 判断の基盤となる前提、仮定、不確実な要素
-
-前提・仮定・不確実性を明示し、仮定を事実のように扱わないこと。
-
-## プロジェクト概要
-
-- **目的**: GitHub Webhook Bridge (github-webhook-bridge) の Webhook をユーザーのリポジトリに自動登録する
-- **主な機能**:
-  - GitHub API を使用してユーザーのリポジトリ一覧を取得
-  - 既存の Webhook を確認し、必要に応じて作成または削除
-  - GitHub イベントを Discord に転送するための Webhook を一括設定
-- **技術スタック**:
-  - 言語: TypeScript
-  - ランタイム: Node.js
-  - パッケージマネージャー: pnpm (10.28.1)
+重要な決定を行う際は、以下を明示してください：
+1. **判断内容**: 何を決めたか
+2. **代替案**: 他の選択肢
+3. **採用理由**: なぜその選択肢を選んだか
+4. **前提条件**: 判断のベースにある前提
+5. **不確実性**: 確信が持てない点
 
 ## 開発手順（概要）
-
-1. **プロジェクト理解**
-   - README.md とソースコードを読み、プロジェクトの目的と機能を理解する
-   - 環境変数の要件を確認する
-
-2. **依存関係インストール**
-   ```bash
-   pnpm install
-   ```
-
-3. **変更実装**
-   - 既存のコーディングスタイルに従う
-   - 日本語と英数字の間に半角スペースを入れる
-   - 関数には JSDoc で日本語のドキュメントを記載する
-
-4. **テストと Lint/Format 実行**
-   ```bash
-   pnpm lint
-   pnpm fix  # 自動修正
-   ```
-
-5. **動作確認**
-   ```bash
-   pnpm start
-   ```
-
-## 開発コマンド
-
-```bash
-# 依存関係のインストール
-pnpm install
-
-# アプリケーション実行
-pnpm start
-
-# 開発モード（watch）
-pnpm dev
-
-# Lint チェック
-pnpm lint
-
-# Lint + Format 自動修正
-pnpm fix
-```
+1. **プロジェクト理解**: `README.md` やソースコードを読み、目的と構造を理解する。
+2. **依存関係インストール**: `pnpm install` を実行する。
+3. **変更実装**: プロジェクトのコーディング規約（Lint/Format）に従い実装する。
+4. **検証**:
+   - `pnpm lint`: Lint チェック
+   - `pnpm run lint:tsc`: TypeScript 型チェック
+   - `pnpm start` または `pnpm dev`: 動作確認
 
 ## セキュリティ / 機密情報
-
-- **環境変数**: `DISCORD_WEBHOOK_URL` と `PERSONAL_ACCESS_TOKEN` は必須。`.env` ファイルで管理し、Git にコミットしない。
-- **認証情報**: GitHub Personal Access Token は `.env` ファイルで管理し、絶対に Git にコミットしない。
-- **ログ出力**: 設定情報をログに出力する際は、Personal Access Token や Webhook シークレット、Discord Webhook URL などの認証情報を平文で出力しない。必ずマスクするか、存在有無などの非機密なメタ情報のみをログに出すこと。
+- **認証情報**: `PERSONAL_ACCESS_TOKEN` や `WEBHOOK_SECRET`、`DISCORD_WEBHOOK_URL` などの機密情報は絶対に Git にコミットしない。
+- **ログ出力**: ログに機密情報を出力する際は注意する（現在のコードでは設定確認のため平文で出力している）。
 
 ## リポジトリ固有
-
-### 環境変数
-
-以下の環境変数が必須またはオプションで使用される：
-
-- `DISCORD_WEBHOOK_URL`: Discord Webhook の転送先 URL（**必須**）
-- `PERSONAL_ACCESS_TOKEN`: GitHub API 認証トークン（**必須**）
-- `WEBHOOK_SECRET`: Webhook シークレット（**推奨**）
-- `GWB_BASE_URL`: GitHub Webhook Bridge のベース URL（デフォルト: `https://github-webhook-bridge.vercel.app/`）
-- `GWB_PATH`: Webhook リクエストパス（デフォルト: 空文字列）
-- `GWB_QUERY`: Webhook リクエストクエリパラメータ（デフォルト: `?url={url}`）
-- `GWB_CHECK_MODE`: Webhook 設定の比較モード（`BASE_URL` または `FULL_URL`、デフォルト: `BASE_URL`）
-
-### 対象リポジトリ
-
-- アーカイブされたリポジトリとフォークは自動的に除外される
-- オリジナルのリポジトリのみが対象
-
-### エラーメッセージ
-
-- 絵文字（✅、❌、⚠️、📦、🚀など）を使用してユーザーフレンドリーなログを出力している
-- 既存のスタイルに従う
-
-### 注意事項
-
-- **単一ファイル構成**: `src/main.ts` が唯一のソースファイル。シンプルな構成を維持する
-- **TypeScript**: `skipLibCheck` での回避は禁止
-- **日本語と英数字の間**: 半角スペースを挿入する
+- **技術スタック**: TypeScript, Node.js
+- **主要ファイル**: `src/main.ts` (単一ファイル構成)
+- **環境変数**: `.env` ファイルで管理（必須: `DISCORD_WEBHOOK_URL`, `PERSONAL_ACCESS_TOKEN`）
+- **Webhook 設定モード**（`GWB_CHECK_MODE`）:
+  - `BASE_URL`: ベース URL が一致する Webhook が存在すればスキップ
+  - `FULL_URL`: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
+- **エラーメッセージスタイル**: 絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用し、既存スタイルに準拠する
+- **TypeScript 制約**: `skipLibCheck` の使用は禁止
+- **ログ出力**: 認証情報や Webhook URL は、コンフィグレーション確認のために平文でログ出力される
