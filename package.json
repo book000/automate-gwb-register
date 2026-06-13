@@ -27,19 +27,19 @@
     "lint": "run-z lint:prettier,lint:eslint,lint:tsc"
   },
   "devDependencies": {
-    "@book000/eslint-config": "1.14.38",
-    "@book000/node-utils": "1.24.170",
+    "@book000/eslint-config": "1.14.59",
+    "@book000/node-utils": "1.24.223",
     "@octokit/rest": "22.0.1",
-    "@types/node": "24.12.4",
-    "eslint": "10.4.0",
+    "@types/node": "24.13.1",
+    "eslint": "10.4.1",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-n": "18.0.1",
+    "eslint-plugin-n": "18.1.0",
     "eslint-plugin-promise": "7.3.0",
-    "prettier": "3.8.3",
+    "prettier": "3.8.4",
     "run-z": "2.1.0",
-    "tsx": "4.22.1",
+    "tsx": "4.22.4",
     "typescript": "6.0.3"
   },
-  "packageManager": "pnpm@11.1.2+sha512.415a1cc25974731e75455c1468371be74c5aa5fb7621b50d4056d222451609f11412f23fd602e6169f1e060466641f798597e1be961a10688836a67b16569499"
+  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916"
 }
