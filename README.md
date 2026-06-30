@@ -21,7 +21,9 @@ Automatically register [github-webhook-bridge](https://github.com/book000/github
 
 ## Legacy webhook migration
 
-If a repository has a webhook pointing to a previously known GitHub Webhook Bridge host (e.g. the old `https://github-webhook-bridge.vercel.app/` hosting), it is automatically detected, deleted, and recreated against the current `GWB_BASE_URL`. This migration runs regardless of `GWB_CHECK_MODE`.
+If a repository has a webhook pointing to a previously known GitHub Webhook Bridge host (e.g. the old `https://github-webhook-bridge.vercel.app/` hosting), it is automatically detected and deleted, and a webhook is then created against the current `GWB_BASE_URL` (or left as-is if one already exists there). This migration runs regardless of `GWB_CHECK_MODE`.
+
+Note: the set of "previously known" hosts is hardcoded in the source. If you explicitly set `GWB_BASE_URL` to one of those known hosts other than the current default, webhooks pointing to the other known host(s) will be treated as legacy and removed.
 
 ## License
 
