@@ -1,6 +1,12 @@
 import { Octokit } from '@octokit/rest'
 import { Logger } from '@book000/node-utils'
 
+/** 既知の GitHub Webhook Bridge ホスティング先 URL 一覧（レガシー Webhook 移行検出用） */
+const KNOWN_GWB_BASE_URLS = [
+  'https://github-webhook-bridge.vercel.app/',
+  'https://gwb.tomacheese.com/',
+]
+
 async function main() {
   const logger = Logger.configure('main')
 
@@ -22,8 +28,7 @@ async function main() {
     logger.warn('⚠️ WEBHOOK_SECRET is not set')
   }
 
-  const baseUrl =
-    process.env.GWB_BASE_URL ?? 'https://github-webhook-bridge.vercel.app/'
+  const baseUrl = process.env.GWB_BASE_URL ?? 'https://gwb.tomacheese.com/'
   const path = process.env.GWB_PATH ?? ''
   const query = process.env.GWB_QUERY ?? '?url={url}'
 
@@ -73,7 +78,29 @@ async function main() {
       per_page: 100,
     })
 
-    const filteredHooks = hooks.filter((hook) =>
+    // 既知の旧ホスト URL に一致し、現在の baseUrl とは異なる Webhook をレガシーとみなし削除する
+    // (GWB_CHECK_MODE の値に関わらず常に実行する)
+    const legacyHooks = hooks.filter(
+      (hook) =>
+        KNOWN_GWB_BASE_URLS.some((knownBaseUrl) =>
+          hook.config.url?.startsWith(knownBaseUrl)
+        ) && !hook.config.url?.startsWith(baseUrl)
+    )
+    for (const hook of legacyHooks) {
+      logger.info(
+        `🚮 Remove legacy webhook (hook_id=${hook.id}, url=${hook.config.url})`
+      )
+      await octokit.rest.repos.deleteWebhook({
+        owner: repo.owner.login,
+        repo: repo.name,
+        hook_id: hook.id,
+      })
+    }
+
+    // レガシー Webhook を除いた残りの一覧で、以降の判定・削除処理を行う
+    const remainingHooks = hooks.filter((hook) => !legacyHooks.includes(hook))
+
+    const filteredHooks = remainingHooks.filter((hook) =>
       checkMode === 'FULL_URL'
         ? hook.config.url === url
         : hook.config.url?.startsWith(baseUrl)
@@ -86,7 +113,7 @@ async function main() {
 
     // FULL_URLモードの場合、BASE_URLで始まるWebhookを削除
     if (checkMode === 'FULL_URL') {
-      const baseHooks = hooks.filter(
+      const baseHooks = remainingHooks.filter(
         (hook) =>
           hook.config.url?.startsWith(baseUrl) && hook.config.url !== url
       )
