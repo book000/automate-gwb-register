@@ -9,8 +9,8 @@ Automatically register [github-webhook-bridge](https://github.com/book000/github
 - `WEBHOOK_SECRET`: Utilized as a secret token for securing webhooks, ensuring that the sender of the webhook payload is actually GitHub.
   - Optional, but strongly recommended to be set
 - `PERSONAL_ACCESS_TOKEN`: Required for authenticating with the GitHub API to fetch user repositories and manage webhooks.
-- `GWB_BASE_URL`: Specifies the base URL of the GitHub Webhook Bridge service. If not set, it defaults to `https://github-webhook-bridge.vercel.app/`. This service is used to bridge GitHub webhooks to other services like Discord.
-  - Default: `https://github-webhook-bridge.vercel.app/`
+- `GWB_BASE_URL`: Specifies the base URL of the GitHub Webhook Bridge service. If not set, it defaults to `https://gwb.tomacheese.com/`. This service is used to bridge GitHub webhooks to other services like Discord.
+  - Default: `https://gwb.tomacheese.com/`
 - `GWB_PATH`: Webhook Request Destination
 - `GWB_QUERY`: Query parameter for Webhook request destination
   - Default: `?url={url}` (`{url}` is replaced by the value of DISCORD_WEBHOOK_URL)
@@ -18,6 +18,12 @@ Automatically register [github-webhook-bridge](https://github.com/book000/github
   - Choices: `BASE_URL`, `FULL_URL`
   - Default: `BASE_URL`
   - If FULL_URL is specified, settings that match only BASE_URL will be deleted.
+
+## Legacy webhook migration
+
+If a repository has a webhook pointing to a previously known GitHub Webhook Bridge host (e.g. the old `https://github-webhook-bridge.vercel.app/` hosting), it is automatically detected and deleted, and a webhook is then created against the current `GWB_BASE_URL` (or left as-is if one already exists there). This migration runs regardless of `GWB_CHECK_MODE`.
+
+Note: the set of "previously known" hosts is hardcoded in the source. If you explicitly set `GWB_BASE_URL` to one of those known hosts other than the current default, webhooks pointing to the other known host(s) will be treated as legacy and removed.
 
 ## License
 
