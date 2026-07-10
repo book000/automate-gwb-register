@@ -9,7 +9,7 @@
 2. **検討した代替案**: 他にどのような方法があったか
 3. **採用しなかった案とその理由**: なぜ他の方法を選ばなかったか
 4. **前提条件・仮定・不確実性**: 判断の基準となった前提や、不明確な点
-5. **他エージェントによるレビュー可否**: Codex CLI などのレビューが必要か
+5. **レビュー要否**: 追加のレビューが必要かどうか
 
 ## プロジェクト概要
 - **目的**: GitHub Webhook Bridge の Webhook をユーザーのリポジトリに自動登録する
@@ -39,10 +39,8 @@
 - **Docstring**: 関数やインターフェースには日本語で docstring を記述する
 - **命名規則**: 変数・関数は camelCase、定数は UPPER_SNAKE_CASE、クラスは PascalCase
 
-## 相談ルール
-- **Codex CLI**: 実装レビュー、局所的な設計相談、整合性確認に利用
-- **Gemini CLI**: 外部仕様の調査、最新情報の確認に利用
-- **指摘への対応**: エージェントからの指摘は黙殺せず、必ず対応または理由を説明する
+## レビュー対応
+- **指摘への対応**: レビュー（人間・Copilot コードレビュー等）からの指摘は黙殺せず、必ず対応するか理由を説明する
 
 ## 開発コマンド
 ```bash
@@ -84,7 +82,7 @@ pnpm run lint:tsc
 - ロジック変更時は手動での動作確認（`pnpm dev` 等）を徹底する
 
 ## ドキュメント更新ルール
-- **更新対象**: `README.md` (仕様変更時), プロンプトファイル (ルール変更時)
+- **更新対象**: `README.md` (仕様変更時), `CLAUDE.md` および `.github/copilot-instructions.md` (ルール・規約変更時)
 - **更新タイミング**: 機能追加、環境変数変更、依存関係のメジャーアップデート時
 
 ## 作業チェックリスト
@@ -112,15 +110,15 @@ pnpm run lint:tsc
 2. PR 本文が最新状態のみを網羅していることを確認する
 3. GitHub Actions CI の結果を確認する
 4. Copilot レビューに対応し、コメントに返信する
-5. Codex のコードレビューを実施し、指摘対応を行う
 
 ## リポジトリ固有
 - **アーカイブ/フォーク**: `archived: true` または `fork: true` のリポジトリは Webhook 設定の対象外とする
 - **環境変数**: 
   - 必須: `DISCORD_WEBHOOK_URL`（Discord Webhook 転送先 URL）、`PERSONAL_ACCESS_TOKEN`（GitHub API 認証トークン）
-  - オプション: `WEBHOOK_SECRET`、`GWB_BASE_URL`（デフォルト: `https://github-webhook-bridge.vercel.app/`）、`GWB_PATH`、`GWB_QUERY`（デフォルト: `?url={url}`）、`GWB_CHECK_MODE`（デフォルト: `BASE_URL`）
+  - オプション: `WEBHOOK_SECRET`、`GWB_BASE_URL`（デフォルト: `https://gwb.tomacheese.com/`）、`GWB_PATH`、`GWB_QUERY`（デフォルト: `?url={url}`）、`GWB_CHECK_MODE`（デフォルト: `BASE_URL`）
 - **Webhook 設定モード**（`GWB_CHECK_MODE`）:
   - `BASE_URL` モード: ベース URL が一致する Webhook が存在すればスキップ
   - `FULL_URL` モード: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
+- **レガシー Webhook 移行**: `src/main.ts` の `KNOWN_GWB_BASE_URLS` に列挙された既知の旧ホスト（現在の `GWB_BASE_URL` と異なるもの）を指す Webhook はレガシーとみなし、`GWB_CHECK_MODE` に関わらず常に削除してから現行 URL へ再登録する。既知ホストを追加・変更する場合はこの定数を更新する。
 - **エラーメッセージスタイル**: 絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用してユーザーフレンドリーなログを出力する。既存スタイルに準拠する。
-- **ログ出力時の認証情報**: ログに認証情報や Webhook URL は、コンフィグレーション確認のために平文でログ出力される（`src/main.ts` の42～48行目参照）。
+- **ログ出力時の認証情報**: 認証情報（`PERSONAL_ACCESS_TOKEN`、`WEBHOOK_SECRET`）や Webhook URL は、コンフィグレーション確認のために平文でログ出力される（`src/main.ts` の設定情報表示部分参照）。この挙動は既知のものであり、変更する場合は影響を確認すること。
