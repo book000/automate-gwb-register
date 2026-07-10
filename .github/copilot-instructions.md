@@ -1,68 +1,40 @@
-# GitHub Copilot Instructions
+# GitHub Copilot コードレビュー指示
 
-## プロジェクト概要
-- 目的: GitHub Webhook Bridge (github-webhook-bridge) の Webhook をユーザーのリポジトリに自動登録する
-- 主な機能: ユーザーのリポジトリ一覧取得、Webhook の作成・削除・更新、GitHub イベントの Discord への転送設定
-- 対象ユーザー: 開発者、github-webhook-bridge 利用者
+このリポジトリの Pull Request をレビューする際に重視してほしい観点をまとめる。
+リポジトリの概要・開発手順は `CLAUDE.md` を参照。ここではレビュー基準に絞って記載する。
 
-## 共通ルール
-- 会話は日本語で行う。
-- PR とコミットは [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) に従い、`<type>(<scope>): <description>` 形式で記述する（例: `feat(webhook): Webhook 登録機能を追加`）。
-- 日本語と英数字の間には半角スペースを入れる。
+## 前提
 
-## 技術スタック
-- 言語: TypeScript
-- ランタイム: Node.js (tsx)
-- パッケージマネージャー: pnpm (10.28.1)
-- ライブラリ: @octokit/rest, @book000/node-utils
+- TypeScript / Node.js の単一ファイル構成（`src/main.ts`）。GitHub API (`@octokit/rest`) で
+  リポジトリ一覧と Webhook を操作するバッチ処理。
+- フォーマット (Prettier) と Lint (ESLint) は CI で強制される。**フォーマット/Lint が自動修正できる
+  スタイル差分は指摘しない**（インデント、クォート、セミコロン等）。
 
-## コーディング規約
-- フォーマット: Prettier
-- Lint: ESLint (`@book000/eslint-config`)
-- 命名規則: camelCase (変数・関数), PascalCase (クラス), UPPER_SNAKE_CASE (定数)
-- コメント: 日本語で記述
-- エラーメッセージ: 英語で記述（ただし、ユーザー向けログは絵文字付き日本語も可）
-- TypeScript: `skipLibCheck` の使用禁止
+## 重点的に確認すること
 
-## 開発コマンド
-```bash
-# 依存関係のインストール
-pnpm install
+- **機密情報の漏洩**: `PERSONAL_ACCESS_TOKEN`、`WEBHOOK_SECRET`、`DISCORD_WEBHOOK_URL` などを
+  コードやログにハードコードしていないか。これらは `.env` から読む前提。
+- **Webhook の破壊的操作**: `deleteWebhook` / `createWebhook` を伴う変更は、対象リポジトリの
+  絞り込み条件（`archived`・`fork` の除外）と `GWB_CHECK_MODE`（`BASE_URL` / `FULL_URL`）の分岐が
+  正しいか、意図しない Webhook を削除しないかを重点確認する。
+- **レガシー Webhook 移行ロジック**: `KNOWN_GWB_BASE_URLS` と現行 `GWB_BASE_URL` の origin 比較で、
+  現行ホストの Webhook を誤ってレガシー扱いして削除しないか。URL 比較は末尾スラッシュ等の
+  表記ゆれに耐えるか（`URL().origin` での比較を維持しているか）。
+- **エラーハンドリング**: GitHub API 呼び出しの失敗時に処理が適切に停止/継続するか。必須環境変数
+  未設定時に `process.exitCode = 1` で終了しているか。
+- **型安全性**: `any` の新規使用、`skipLibCheck` の追加は不可。
+- **ページネーション**: リポジトリ・Webhook の全件取得に `octokit.paginate` を使っているか
+  （件数上限での取りこぼしがないか）。
 
-# アプリケーション実行
-pnpm start
+## フラグすべきでない既知パターン
 
-# 開発モード (watch)
-pnpm dev
+- 認証情報や Webhook URL を設定確認のため平文でログ出力している箇所は**意図的な既存挙動**。
+  新規に機密情報を追加ログ出力する変更でなければ指摘しない。
+- 絵文字付き（✅ ❌ ⚠️ 📦 🚀 🔧 👤 ⏭️ 🚮 等）のユーザー向けログは既存スタイル。統一されていれば可。
+- テストフレームワーク未導入は既知。テストが無いこと自体は指摘不要。
 
-# Lint チェック
-pnpm lint
+## 規約
 
-# Lint + Format 自動修正
-pnpm fix
-
-# TypeScript 型チェック
-pnpm run lint:tsc
-```
-
-## テスト方針
-- 現在、テストフレームワークは導入されていない。
-- 必要に応じて導入を検討する。
-
-## セキュリティ / 機密情報
-- `DISCORD_WEBHOOK_URL`, `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` などの認証情報は `.env` で管理し、Git にコミットしない。
-- ログに認証情報を出力する際は注意する（現在のコードでは設定確認のため平文で出力している）。
-
-## ドキュメント更新
-- `README.md`: 機能追加や環境変数の変更時に更新
-- `GEMINI.md`, `CLAUDE.md`, `AGENTS.md`: ルール変更時に更新
-
-## リポジトリ固有
-- 単一ファイル構成 (`src/main.ts`) を維持する。
-- アーカイブ済み、またはフォークされたリポジトリは処理対象外。
-- 環境変数 `DISCORD_WEBHOOK_URL` と `PERSONAL_ACCESS_TOKEN` は必須。
-- `GWB_CHECK_MODE` の動作:
-  - `BASE_URL` モード: ベース URL が一致する Webhook が存在すればスキップ
-  - `FULL_URL` モード: 完全に一致する URL の Webhook が存在すればスキップし、ベース URL のみ一致する Webhook は削除
-- エラーメッセージは絵文字（✅、❌、⚠️、📦、🚀、🔧、👤、⏭️、🚮など）を使用してユーザーフレンドリーに出力する。
-- 環境変数の詳細（`DISCORD_WEBHOOK_URL`、`PERSONAL_ACCESS_TOKEN`、`WEBHOOK_SECRET` など）はコンフィグレーション確認のために平文でログ出力される。
+- コミット/PR タイトルは [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+  （`<type>(<scope>): <description>`、description は日本語）。
+- コメントは日本語、エラーメッセージ（ログ文字列）は英語。日本語と英数字の間は半角スペース。
