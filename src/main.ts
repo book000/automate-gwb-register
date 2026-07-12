@@ -49,7 +49,10 @@ async function main() {
   const path = process.env.GWB_PATH ?? ''
   const query = process.env.GWB_QUERY ?? '?url={url}'
 
-  const url = `${baseUrl}${path}${query}`.replace('{url}', discordWebhookUrl)
+  const url = `${baseUrl}${path}${query}`.replace(
+    '{url}',
+    () => discordWebhookUrl
+  )
 
   const baseUrlOrigin = new URL(baseUrl).origin
   const knownOrigins = new Set(
