@@ -24,7 +24,7 @@ DISCORD_WEBHOOK_URL=... PERSONAL_ACCESS_TOKEN=... WEBHOOK_SECRET=... pnpm start
 
 The script modifies webhooks on real repositories. The repositories are listed with the user of `PERSONAL_ACCESS_TOKEN`, so use a token with permission to manage repository webhooks.
 
-The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and on manual dispatch) using the repository secrets `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET`, `PERSONAL_ACCESS_TOKEN` and `GWB_QUERY`. In that workflow an unset `GWB_QUERY` secret is passed as an empty string, which overrides the default query.
+The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and on manual dispatch) using the repository secrets `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET`, `PERSONAL_ACCESS_TOKEN` and `GWB_QUERY`. In that workflow an unset or empty `GWB_QUERY` secret is not passed to the app, so the default `?url={url}` is used.
 
 ## Environment variables
 
