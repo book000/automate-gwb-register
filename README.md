@@ -1,8 +1,8 @@
 # automate-gwb-register
 
-Registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks on the repositories of the authenticated GitHub user.
+Registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks on the repositories the authenticated GitHub user can administer.
 
-For every public repository of the user that is neither archived nor a fork (the repositories are listed with `repos.listForUser`, so private repositories are not processed), it creates a webhook (all events, JSON payload) that points to the bridge and forwards events to a Discord webhook. Existing bridge webhooks are detected and not duplicated.
+For every repository that the user of `PERSONAL_ACCESS_TOKEN` can access (their own public and private repositories, plus collaborator and organization repositories), is neither archived nor a fork, and on which the user has admin permission, it creates a webhook (all events, JSON payload) that points to the bridge and forwards events to a Discord webhook. Existing bridge webhooks are detected and not duplicated.
 
 ## Setup
 
@@ -22,7 +22,7 @@ DISCORD_WEBHOOK_URL=... PERSONAL_ACCESS_TOKEN=... WEBHOOK_SECRET=... pnpm start
 
 `pnpm dev` runs the same entry point (`src/main.ts`) in watch mode.
 
-The script modifies webhooks on real repositories. The repositories are listed with the user of `PERSONAL_ACCESS_TOKEN`, so use a token with permission to manage repository webhooks.
+The script modifies webhooks on real repositories. The repositories are listed with the user of `PERSONAL_ACCESS_TOKEN`, so use a token with permission to manage repository webhooks. Private repositories are processed only if the token can access them (a classic token with the `repo` scope, or a fine-grained token with access to them).
 
 The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and on manual dispatch) using the repository secrets `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET`, `PERSONAL_ACCESS_TOKEN` and `GWB_QUERY`. In that workflow an unset `GWB_QUERY` secret is passed as an empty string, which overrides the default query.
 
@@ -48,7 +48,7 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
 
 The webhook URL is `GWB_BASE_URL` + `GWB_PATH` + `GWB_QUERY`.
 
-The script logs the configuration at startup, including `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` and the Discord webhook URL, in plain text. Keep the logs private.
+The script logs the configuration at startup, including `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` and the Discord webhook URL, in plain text. Keep the logs private. The log also contains the names of the processed private repositories, so it is publicly readable when the script runs in the GitHub Actions of a repository that is public.
 
 ## Legacy webhook migration
 

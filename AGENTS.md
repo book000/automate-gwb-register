@@ -11,7 +11,7 @@ Guidance for AI coding agents and contributors. `CLAUDE.md` imports this file, a
 
 ## Overview
 
-A batch script that registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks (forwarding to Discord) on all public, non-archived, non-fork repositories of the user that owns `PERSONAL_ACCESS_TOKEN`. It deletes and creates webhooks on real repositories, so never run it against real credentials while developing. See `README.md` for the environment variables, `GWB_CHECK_MODE` and legacy webhook migration.
+A batch script that registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks (forwarding to Discord) on all non-archived, non-fork repositories that the user of `PERSONAL_ACCESS_TOKEN` can access (own public and private repositories, plus collaborator and organization repositories) and on which the user has admin permission. It deletes and creates webhooks on real repositories, so never run it against real credentials while developing. See `README.md` for the environment variables, `GWB_CHECK_MODE` and legacy webhook migration.
 
 ## Commands
 
