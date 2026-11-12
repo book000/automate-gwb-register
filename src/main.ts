@@ -1,69 +1,48 @@
 import { Octokit } from '@octokit/rest'
 import { Logger } from '@book000/node-utils'
-
-/** Known GitHub Webhook Bridge host URLs, used to detect legacy webhooks for migration. */
-const KNOWN_GWB_BASE_URLS = [
-  'https://github-webhook-bridge.vercel.app/',
-  'https://gwb.tomacheese.com/',
-]
-
-/**
- * Returns the origin (scheme + host) of a webhook URL.
- * Used to compare hosts regardless of trailing slashes and similar notation differences.
- * @param hookUrl - The webhook's config.url (may be unset)
- * @returns The origin string, or null if the URL is unset or invalid
- */
-function getHookOrigin(hookUrl: string | undefined): string | null {
-  if (!hookUrl) {
-    return null
-  }
-  try {
-    return new URL(hookUrl).origin
-  } catch {
-    return null
-  }
-}
+import { loadConfig } from './config'
+import {
+  filterTargetRepositories,
+  getHookOrigin,
+  planWebhookActions,
+} from './webhook-plan'
 
 async function main() {
   const logger = Logger.configure('main')
 
-  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL
-  const webhookSecret = process.env.WEBHOOK_SECRET
-  const personalAccessToken = process.env.PERSONAL_ACCESS_TOKEN
-  if (!discordWebhookUrl || !personalAccessToken) {
+  const loaded = loadConfig(process.env)
+  if (!loaded.ok && loaded.errors.kind === 'missing-required') {
     logger.error('❌ Required environment variables are not set')
-    logger.error(`  DISCORD_WEBHOOK_URL: ${discordWebhookUrl ? '✅' : '❌'}`)
     logger.error(
-      `  PERSONAL_ACCESS_TOKEN: ${personalAccessToken ? '✅' : '❌'}`
+      `  DISCORD_WEBHOOK_URL: ${loaded.errors.discordWebhookUrl ? '✅' : '❌'}`
+    )
+    logger.error(
+      `  PERSONAL_ACCESS_TOKEN: ${loaded.errors.personalAccessToken ? '✅' : '❌'}`
     )
     process.exitCode = 1
     return
   }
 
-  if (!webhookSecret) {
+  if (!process.env.WEBHOOK_SECRET) {
     logger.warn('⚠️ WEBHOOK_SECRET is not set')
   }
 
-  const baseUrl = process.env.GWB_BASE_URL ?? 'https://gwb.tomacheese.com/'
-  const path = process.env.GWB_PATH ?? ''
-  const query = process.env.GWB_QUERY ?? '?url={url}'
-
-  const url = `${baseUrl}${path}${query}`.replace(
-    '{url}',
-    () => discordWebhookUrl
-  )
-
-  const baseUrlOrigin = new URL(baseUrl).origin
-  const knownOrigins = new Set(
-    KNOWN_GWB_BASE_URLS.map((knownBaseUrl) => new URL(knownBaseUrl).origin)
-  )
-
-  const checkMode = process.env.GWB_CHECK_MODE ?? 'BASE_URL'
-  if (!['BASE_URL', 'FULL_URL'].includes(checkMode)) {
+  if (!loaded.ok) {
     logger.error('❌ GWB_CHECK_MODE is invalid. Must be BASE_URL or FULL_URL')
     process.exitCode = 1
     return
   }
+
+  const {
+    discordWebhookUrl,
+    webhookSecret,
+    personalAccessToken,
+    baseUrl,
+    path,
+    query,
+    url,
+    checkMode,
+  } = loaded.config
 
   const maskedUrl = `${baseUrl}${path}${query}`.replace('{url}', () => '***')
 
@@ -90,11 +69,7 @@ async function main() {
     }
   )
 
-  const filteredRepos = repos.filter(
-    (repo) => !repo.archived && !repo.fork && repo.permissions?.admin === true
-  )
-
-  for (const repo of filteredRepos) {
+  for (const repo of filterTargetRepositories(repos)) {
     logger.info(`📦 ${repo.full_name}`)
 
     const hooks = await octokit.paginate(octokit.rest.repos.listWebhooks, {
@@ -103,17 +78,9 @@ async function main() {
       per_page: 100,
     })
 
-    // A webhook on a known host other than the current baseUrl is legacy and is always deleted,
-    // regardless of GWB_CHECK_MODE.
-    const legacyHooks = hooks.filter((hook) => {
-      const hookOrigin = getHookOrigin(hook.config.url)
-      return (
-        hookOrigin !== null &&
-        knownOrigins.has(hookOrigin) &&
-        hookOrigin !== baseUrlOrigin
-      )
-    })
-    for (const hook of legacyHooks) {
+    const plan = planWebhookActions(hooks, { url, baseUrl, checkMode })
+
+    for (const hook of plan.legacyHooks) {
       logger.info(
         `🚮 Remove legacy webhook (hook_id=${hook.id}, origin=${getHookOrigin(hook.config.url)})`
       )
@@ -124,33 +91,18 @@ async function main() {
       })
     }
 
-    // The checks below use only the hooks that were not removed as legacy
-    const legacyHookIds = new Set(legacyHooks.map((hook) => hook.id))
-    const remainingHooks = hooks.filter((hook) => !legacyHookIds.has(hook.id))
-
-    const filteredHooks = remainingHooks.filter((hook) =>
-      checkMode === 'FULL_URL'
-        ? hook.config.url === url
-        : hook.config.url?.startsWith(baseUrl)
-    )
-    if (filteredHooks.length > 0) {
+    if (plan.alreadyRegistered) {
       logger.info('⏭️ Webhook already exists, skip')
       continue
     }
 
-    if (checkMode === 'FULL_URL') {
-      const baseHooks = remainingHooks.filter(
-        (hook) =>
-          hook.config.url?.startsWith(baseUrl) && hook.config.url !== url
-      )
-      for (const hook of baseHooks) {
-        logger.info(`🚮 Remove webhook (hook_id=${hook.id})`)
-        await octokit.rest.repos.deleteWebhook({
-          owner: repo.owner.login,
-          repo: repo.name,
-          hook_id: hook.id,
-        })
-      }
+    for (const hook of plan.staleHooks) {
+      logger.info(`🚮 Remove webhook (hook_id=${hook.id})`)
+      await octokit.rest.repos.deleteWebhook({
+        owner: repo.owner.login,
+        repo: repo.name,
+        hook_id: hook.id,
+      })
     }
 
     await octokit.rest.repos.createWebhook({

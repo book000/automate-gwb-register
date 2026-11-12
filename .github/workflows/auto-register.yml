@@ -31,7 +31,9 @@ jobs:
           pnpm install --frozen-lockfile --prefer-frozen-lockfile
 
       - name: 🏃 Run auto register
-        run: pnpm start
+        run: |
+          [ -n "$GWB_QUERY" ] || unset GWB_QUERY
+          pnpm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
