@@ -37,7 +37,7 @@ There is no test framework; verify logic changes by reading the code and, if nee
 - Avoid `any`. Do not enable `skipLibCheck` in `tsconfig.json`.
 - Keep log messages consistent with the existing emoji prefix style.
 - Compare webhook hosts by `URL().origin` so that trailing slashes do not matter, and never treat the current `GWB_BASE_URL` host as legacy.
-- Credentials and webhook URLs are logged in plain text at startup on purpose. Do not add other secret logging.
+- Credentials and webhook URLs must not be logged in plain text: startup logs show `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET` and `PERSONAL_ACCESS_TOKEN` only as set/unset, and the embedded Discord webhook URL is masked as `***`. Do not add log lines that output them.
 - When behavior or environment variables change, update `README.md` and this file.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/); branches follow [Conventional Branch](https://conventional-branch.github.io) short form (`feat/...`, `fix/...`).
 - Do not commit to Renovate PRs. Never commit secrets. Address every review comment or explain why not.
