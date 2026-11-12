@@ -48,7 +48,7 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
 
 The webhook URL is `GWB_BASE_URL` + `GWB_PATH` + `GWB_QUERY`.
 
-The script logs the configuration at startup, including `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` and the Discord webhook URL, in plain text. Keep the logs private.
+The script logs the configuration at startup. `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` and `DISCORD_WEBHOOK_URL` are logged only as set (✅) or unset (❌), and the Discord webhook URL embedded in the generated URL is masked as `***`.
 
 ## Legacy webhook migration
 
