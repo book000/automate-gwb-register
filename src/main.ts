@@ -65,15 +65,16 @@ async function main() {
     return
   }
 
-  // Credentials and webhook URLs are logged in plain text on purpose (to check the configuration)
+  const maskedUrl = `${baseUrl}${path}${query}`.replace('{url}', () => '***')
+
   logger.info('🔧 Configuration')
-  logger.info(`  DISCORD_WEBHOOK_URL: ${discordWebhookUrl}`)
-  logger.info(`  WEBHOOK_SECRET: ${webhookSecret}`)
-  logger.info(`  PERSONAL_ACCESS_TOKEN: ${personalAccessToken}`)
+  logger.info(`  DISCORD_WEBHOOK_URL: ${discordWebhookUrl ? '✅' : '❌'}`)
+  logger.info(`  WEBHOOK_SECRET: ${webhookSecret ? '✅' : '❌'}`)
+  logger.info(`  PERSONAL_ACCESS_TOKEN: ${personalAccessToken ? '✅' : '❌'}`)
   logger.info(`  GWB_BASE_URL: ${baseUrl}`)
   logger.info(`  GWB_PATH: ${path}`)
   logger.info(`  GWB_QUERY: ${query}`)
-  logger.info(`  URL: ${url}`)
+  logger.info(`  URL: ${maskedUrl}`)
   logger.info(`  GWB_CHECK_MODE: ${checkMode}`)
 
   const octokit = new Octokit({ auth: personalAccessToken })
@@ -112,7 +113,7 @@ async function main() {
     })
     for (const hook of legacyHooks) {
       logger.info(
-        `🚮 Remove legacy webhook (hook_id=${hook.id}, url=${hook.config.url})`
+        `🚮 Remove legacy webhook (hook_id=${hook.id}, origin=${getHookOrigin(hook.config.url)})`
       )
       await octokit.rest.repos.deleteWebhook({
         owner: repo.owner.login,
