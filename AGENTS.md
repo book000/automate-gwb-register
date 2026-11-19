@@ -45,6 +45,7 @@ Unit tests use vitest and live next to the modules as `src/*.test.ts`; run them 
 - Failures must reach the exit status: any setup or per-repository error sets `process.exitCode = 1`, and `✅ Done` is logged only when nothing failed. `@book000/node-utils` only logs unhandled rejections, so never rely on it for the exit code.
 - Never delete a webhook before its replacement has been updated or created; keep all webhook write ordering in `applyWebhookPlan`.
 - Credentials and webhook URLs must not be logged in plain text: startup logs show `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET` and `PERSONAL_ACCESS_TOKEN` only as set/unset, and the embedded Discord webhook URL is masked as `***`. Do not add log lines that output them.
+- The Discord webhook URL is percent-encoded with `encodeURIComponent` when substituted for `{url}` in `loadConfig`, so its own query string survives inside the bridge URL; `AppConfig.discordWebhookUrl` stays raw. The bridge decodes the `url` query value.
 - When behavior or environment variables change, update `README.md` and this file.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/); branches follow [Conventional Branch](https://conventional-branch.github.io) short form (`feat/...`, `fix/...`).
 - Do not commit to Renovate PRs. Never commit secrets. Address every review comment or explain why not.

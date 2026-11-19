@@ -25,9 +25,11 @@ export type ConfigError =
 /**
  * Builds the configuration from environment variables.
  * Checks run in this order: required variables, `GWB_BASE_URL` validity, validity of the combined webhook URL, `GWB_CHECK_MODE`.
+ * `{url}` in `GWB_QUERY` is replaced by the percent-encoded `DISCORD_WEBHOOK_URL`; `AppConfig.discordWebhookUrl` keeps the raw value.
  * @param env - The environment variables (normally `process.env`)
  * @returns The configuration, or the first error found
  * @throws {TypeError} If `GWB_BASE_URL` or the webhook URL built from it is not a valid URL
+ * @throws {URIError} If `DISCORD_WEBHOOK_URL` contains a lone surrogate
  */
 export function loadConfig(
   env: NodeJS.ProcessEnv
@@ -50,9 +52,8 @@ export function loadConfig(
   const path = env.GWB_PATH ?? ''
   const query = env.GWB_QUERY ?? '?url={url}'
 
-  const url = `${baseUrl}${path}${query}`.replace(
-    '{url}',
-    () => discordWebhookUrl
+  const url = `${baseUrl}${path}${query}`.replace('{url}', () =>
+    encodeURIComponent(discordWebhookUrl)
   )
 
   if (!URL.canParse(baseUrl)) {

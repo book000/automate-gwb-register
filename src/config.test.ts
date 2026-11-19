@@ -17,7 +17,7 @@ describe('loadConfig', () => {
         baseUrl: 'https://gwb.tomacheese.com/',
         path: '',
         query: '?url={url}',
-        url: 'https://gwb.tomacheese.com/?url=https://example.test/hook',
+        url: 'https://gwb.tomacheese.com/?url=https%3A%2F%2Fexample.test%2Fhook',
         checkMode: 'BASE_URL',
       },
     })
@@ -42,7 +42,7 @@ describe('loadConfig', () => {
         baseUrl: 'https://gwb.example.test/',
         path: 'discord',
         query: '?target={url}&x=1',
-        url: 'https://gwb.example.test/discord?target=https://example.test/hook&x=1',
+        url: 'https://gwb.example.test/discord?target=https%3A%2F%2Fexample.test%2Fhook&x=1',
         checkMode: 'FULL_URL',
       },
     })
@@ -53,12 +53,55 @@ describe('loadConfig', () => {
       ...REQUIRED,
       DISCORD_WEBHOOK_URL: 'https://example.test/a$&b$1c',
     })
+    if (!result.ok) {
+      throw new Error('expected a valid configuration')
+    }
+    expect(result.config.url).toBe(
+      'https://gwb.tomacheese.com/?url=https%3A%2F%2Fexample.test%2Fa%24%26b%241c'
+    )
+    expect(new URL(result.config.url).searchParams.get('url')).toBe(
+      'https://example.test/a$&b$1c'
+    )
+  })
+
+  it('percent-encodes a Discord URL that has its own query string', () => {
+    const discordUrl =
+      'https://discord.com/api/webhooks/1/x?wait=true&thread_id=42'
+    const result = loadConfig({
+      ...REQUIRED,
+      DISCORD_WEBHOOK_URL: discordUrl,
+    })
     expect(result).toMatchObject({
       ok: true,
       config: {
-        url: 'https://gwb.tomacheese.com/?url=https://example.test/a$&b$1c',
+        discordWebhookUrl: discordUrl,
+        url: 'https://gwb.tomacheese.com/?url=https%3A%2F%2Fdiscord.com%2Fapi%2Fwebhooks%2F1%2Fx%3Fwait%3Dtrue%26thread_id%3D42',
       },
     })
+    if (!result.ok) {
+      throw new Error('expected a valid configuration')
+    }
+    expect(new URL(result.config.url).searchParams.get('url')).toBe(discordUrl)
+  })
+
+  it.each([
+    ['the default query', undefined, 'url'],
+    ['a custom query', '?target={url}&x=1', 'target'],
+  ])('round-trips special characters with %s', (_name, query, key) => {
+    const discordUrl = 'https://discord.com/api/webhooks/1/x?a=b&c=d#frag%20+e'
+    const result = loadConfig({
+      ...REQUIRED,
+      DISCORD_WEBHOOK_URL: discordUrl,
+      GWB_QUERY: query,
+    })
+    if (!result.ok) {
+      throw new Error('expected a valid configuration')
+    }
+    const params = new URL(result.config.url).searchParams
+    expect(params.get(key)).toBe(discordUrl)
+    if (query) {
+      expect(params.get('x')).toBe('1')
+    }
   })
 
   it('reports which required variables are missing', () => {

@@ -30,7 +30,7 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
 
 ## Environment variables
 
-- `DISCORD_WEBHOOK_URL`: The Discord webhook URL that events are forwarded to. It is substituted for `{url}` in `GWB_QUERY`.
+- `DISCORD_WEBHOOK_URL`: The Discord webhook URL that events are forwarded to. It is percent-encoded and substituted for `{url}` in `GWB_QUERY`, so a query string such as `?thread_id=42` reaches the bridge intact. Provide it in its plain form: an already percent-encoded value would be encoded twice.
   - Required
 - `PERSONAL_ACCESS_TOKEN`: GitHub token used to list the user's repositories and manage their webhooks.
   - Required
@@ -40,7 +40,7 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
   - Default: `https://gwb.tomacheese.com/`
 - `GWB_PATH`: Path appended to `GWB_BASE_URL`.
   - Default: empty
-- `GWB_QUERY`: Query string appended after the path. `{url}` is replaced by the value of `DISCORD_WEBHOOK_URL`.
+- `GWB_QUERY`: Query string appended after the path. `{url}` is replaced by the percent-encoded value of `DISCORD_WEBHOOK_URL`.
   - Default: `?url={url}`
 - `GWB_CHECK_MODE`: How an existing webhook is matched.
   - Choices: `BASE_URL`, `FULL_URL`
@@ -49,6 +49,8 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
   - `FULL_URL`: Only a webhook whose URL equals the full generated URL counts as registered. If there is none, the first webhook that starts with `GWB_BASE_URL` but differs from the full URL is updated in place to the full URL, and any further such webhooks are deleted after the update succeeded. A new webhook is created only when there is no such webhook.
 
 The webhook URL is `GWB_BASE_URL` + `GWB_PATH` + `GWB_QUERY`. The script stops before calling the GitHub API if the resulting URL is not a valid URL.
+
+Webhooks registered before the Discord URL was percent-encoded keep the raw form. With `GWB_CHECK_MODE=FULL_URL` they are updated once to the encoded URL on the next run; with `BASE_URL` existing webhooks are not rewritten.
 
 The script logs the configuration at startup. `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` and `DISCORD_WEBHOOK_URL` are logged only as set (✅) or unset (❌), and the Discord webhook URL embedded in the generated URL is masked as `***`. The log also contains the names of the processed private repositories, so it is publicly readable when the script runs in the GitHub Actions of a repository that is public.
 
