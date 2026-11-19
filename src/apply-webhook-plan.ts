@@ -34,8 +34,8 @@ export interface WebhookClient {
 
 /**
  * Applies a webhook plan to one repository without ever deleting a hook before its replacement exists.
- * When a replacement is needed, the first legacy/stale hook is updated in place and the remaining ones
- * are deleted only after that update succeeded; with no such hook a new webhook is created.
+ * An incomplete matching hook is updated in place. Otherwise, the first legacy/stale hook is updated,
+ * or a new webhook is created. Old hooks are deleted only after a successful update.
  * When a current webhook is already registered, the legacy hooks are simply deleted.
  * @param client - The GitHub webhook calls
  * @param target - The repository to modify
@@ -51,6 +51,7 @@ export async function applyWebhookPlan(
     legacyHooks: HookLike[]
     staleHooks: HookLike[]
     alreadyRegistered: boolean
+    hookToUpdate?: HookLike
   },
   hookConfig: { url: string; secret: string | undefined },
   logger: { info(message: string): void }
@@ -75,7 +76,11 @@ export async function applyWebhookPlan(
     return
   }
 
-  const replaceable = [...plan.legacyHooks, ...plan.staleHooks]
+  const replaceable = [
+    ...(plan.hookToUpdate ? [plan.hookToUpdate] : []),
+    ...plan.legacyHooks,
+    ...plan.staleHooks,
+  ]
   if (replaceable.length === 0) {
     await client.createWebhook({
       ...target,
@@ -92,7 +97,7 @@ export async function applyWebhookPlan(
   await client.updateWebhook({
     ...target,
     hook_id: first.id,
-    config,
+    config: { ...config, url: plan.hookToUpdate?.config.url ?? config.url },
     events: ['*'],
     active: true,
   })

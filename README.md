@@ -2,7 +2,7 @@
 
 Registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks on the repositories the authenticated GitHub user can administer.
 
-For every repository that the user of `PERSONAL_ACCESS_TOKEN` can access (their own public and private repositories, plus collaborator and organization repositories), is neither archived nor a fork, and on which the user has admin permission, it creates a webhook (all events, JSON payload) that points to the bridge and forwards events to a Discord webhook. Existing bridge webhooks are detected and not duplicated.
+For every repository that the user of `PERSONAL_ACCESS_TOKEN` can access (their own public and private repositories, plus collaborator and organization repositories), is neither archived nor a fork, and on which the user has admin permission, it creates a webhook (all events, JSON payload) that points to the bridge and forwards events to a Discord webhook. Existing matching bridge webhooks are checked and updated if inactive or not configured for all events and JSON payloads.
 
 ## Setup
 
@@ -45,8 +45,10 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
 - `GWB_CHECK_MODE`: How an existing webhook is matched.
   - Choices: `BASE_URL`, `FULL_URL`
   - Default: `BASE_URL`
-  - `BASE_URL`: A webhook whose URL starts with `GWB_BASE_URL` counts as already registered, and the repository is skipped.
-  - `FULL_URL`: Only a webhook whose URL equals the full generated URL counts as registered. If there is none, the first webhook that starts with `GWB_BASE_URL` but differs from the full URL is updated in place to the full URL, and any further such webhooks are deleted after the update succeeded. A new webhook is created only when there is no such webhook.
+  - `BASE_URL`: A webhook whose URL starts with `GWB_BASE_URL` matches. If its delivery settings need repair, its existing URL is preserved.
+  - `FULL_URL`: Only a webhook whose URL equals the full generated URL matches. If there is none, the first webhook that starts with `GWB_BASE_URL` but differs from the full URL is updated in place to the full URL, and any further such webhooks are deleted after the update succeeded. A new webhook is created only when there is no such webhook.
+
+A matching webhook is updated in place if it is inactive, does not subscribe to all events (`*`), or does not use JSON. When multiple hooks match, a fully configured one is preferred. Updates use the configured `WEBHOOK_SECRET`; GitHub removes any previous secret if it is unset. Legacy hooks are removed only after a matching webhook is ready.
 
 The webhook URL is `GWB_BASE_URL` + `GWB_PATH` + `GWB_QUERY`. The script stops before calling the GitHub API if the resulting URL is not a valid URL.
 

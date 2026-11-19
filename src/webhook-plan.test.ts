@@ -10,7 +10,12 @@ const FULL_URL = `${BASE_URL}?url=https://example.test/hook`
 const LEGACY_URL = 'https://github-webhook-bridge.vercel.app/?url=old'
 
 function hook(id: number, url?: string) {
-  return { id, config: { url } }
+  return {
+    id,
+    active: true,
+    events: ['*'],
+    config: { url, content_type: 'json' },
+  }
 }
 
 describe('getHookOrigin', () => {
@@ -62,6 +67,42 @@ describe('planWebhookActions', () => {
       staleHooks: [],
       shouldCreate: false,
     })
+  })
+
+  it.each(['BASE_URL', 'FULL_URL'] as const)(
+    'plans an update for each incomplete matching setting in %s mode',
+    (checkMode) => {
+      const matchingUrl =
+        checkMode === 'BASE_URL' ? `${BASE_URL}?url=other` : FULL_URL
+      const valid = hook(1, matchingUrl)
+      for (const incomplete of [
+        { ...valid, active: false },
+        { ...valid, events: ['push'] },
+        { ...valid, config: { ...valid.config, content_type: 'form' } },
+        { ...valid, config: { url: matchingUrl } },
+      ]) {
+        const plan = planWebhookActions([incomplete], {
+          url: FULL_URL,
+          baseUrl: BASE_URL,
+          checkMode,
+        })
+        expect(plan.hookToUpdate).toBe(incomplete)
+        expect(plan.alreadyRegistered).toBe(false)
+        expect(plan.shouldCreate).toBe(false)
+        expect(plan.staleHooks).toEqual([])
+      }
+    }
+  )
+
+  it('prefers a compliant matching hook over an incomplete one', () => {
+    const incomplete = { ...hook(1, FULL_URL), active: false }
+    const plan = planWebhookActions([incomplete, hook(2, FULL_URL)], {
+      url: FULL_URL,
+      baseUrl: BASE_URL,
+      checkMode: 'FULL_URL',
+    })
+    expect(plan.alreadyRegistered).toBe(true)
+    expect(plan.hookToUpdate).toBeUndefined()
   })
 
   it('does not match in BASE_URL mode when the hook is on another host', () => {

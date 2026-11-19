@@ -135,6 +135,53 @@ describe('applyWebhookPlan', () => {
     expect(client.deleteWebhook).not.toHaveBeenCalled()
   })
 
+  it('repairs a matching hook before removing legacy hooks and preserves its URL', async () => {
+    const { client, logger } = setup()
+    const current = hook(3, 'https://gwb.tomacheese.com/?url=other')
+    await applyWebhookPlan(
+      client,
+      TARGET,
+      {
+        legacyHooks: [legacy1],
+        staleHooks: [],
+        alreadyRegistered: false,
+        hookToUpdate: current,
+      },
+      HOOK_CONFIG,
+      logger
+    )
+    expect(client.updateWebhook).toHaveBeenCalledExactlyOnceWith({
+      ...TARGET,
+      hook_id: 3,
+      config: { ...CONFIG, url: current.config.url },
+      events: ['*'],
+      active: true,
+    })
+    expect(client.updateWebhook.mock.invocationCallOrder[0]).toBeLessThan(
+      client.deleteWebhook.mock.invocationCallOrder[0]
+    )
+  })
+
+  it('keeps legacy hooks if repairing a matching hook fails', async () => {
+    const { client, logger } = setup()
+    client.updateWebhook.mockRejectedValue(new Error('update failed'))
+    await expect(
+      applyWebhookPlan(
+        client,
+        TARGET,
+        {
+          legacyHooks: [legacy1],
+          staleHooks: [],
+          alreadyRegistered: false,
+          hookToUpdate: hook(3, URL_),
+        },
+        HOOK_CONFIG,
+        logger
+      )
+    ).rejects.toThrow('update failed')
+    expect(client.deleteWebhook).not.toHaveBeenCalled()
+  })
+
   it('deletes nothing when the update fails', async () => {
     const { client, logger } = setup()
     client.updateWebhook.mockRejectedValue(new Error('update failed'))

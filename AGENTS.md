@@ -30,9 +30,9 @@ Unit tests use vitest and live next to the modules as `src/*.test.ts`; run them 
 
 - `src/main.ts`: the entry point (Octokit calls for listing repositories and calling `applyWebhookPlan` for each repository, and logging).
 - `src/config.ts`: `loadConfig`, which validates environment variables and builds the webhook URL.
-- `src/webhook-plan.ts`: pure decision logic (`planWebhookActions`, `filterTargetRepositories`, `getHookOrigin`) that classifies existing webhooks as legacy or stale.
+- `src/webhook-plan.ts`: pure decision logic (`planWebhookActions`, `filterTargetRepositories`, `getHookOrigin`) that classifies existing webhooks and identifies matching hooks needing reconciliation.
 - `src/process-each.ts`: `processEach`, which runs a handler sequentially per item, continues after failures and returns them.
-- `src/apply-webhook-plan.ts`: `applyWebhookPlan`, which applies a plan through an injected client (updates the first legacy/stale hook in place, creates when none exists, and deletes old hooks only after that succeeded).
+- `src/apply-webhook-plan.ts`: `applyWebhookPlan`, which applies a plan through an injected client (reconciles a matching hook, updates the first legacy/stale hook in place, or creates one, then deletes old hooks only after any required update succeeds).
 - `.github/workflows/auto-register.yml`: runs `pnpm start` hourly with repository secrets.
 - `scripts/load-env.ps1`: loads a `.env` file into the current PowerShell session. The app itself does not read `.env`.
 
@@ -42,6 +42,7 @@ Unit tests use vitest and live next to the modules as `src/*.test.ts`; run them 
 - Avoid `any`. Do not enable `skipLibCheck` in `tsconfig.json`.
 - Keep log messages consistent with the existing emoji prefix style.
 - Compare webhook hosts by `URL().origin` so that trailing slashes do not matter, and never treat the current `GWB_BASE_URL` host as legacy.
+- Reconcile a matching webhook if it is inactive, does not subscribe to all events, or does not use JSON. In `BASE_URL` mode, preserve its existing URL when updating it. Updates use the configured `WEBHOOK_SECRET`.
 - Failures must reach the exit status: any setup or per-repository error sets `process.exitCode = 1`, and `✅ Done` is logged only when nothing failed. `@book000/node-utils` only logs unhandled rejections, so never rely on it for the exit code.
 - Never delete a webhook before its replacement has been updated or created; keep all webhook write ordering in `applyWebhookPlan`.
 - Credentials and webhook URLs must not be logged in plain text: startup logs show `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET` and `PERSONAL_ACCESS_TOKEN` only as set/unset, and the embedded Discord webhook URL is masked as `***`. Do not add log lines that output them.

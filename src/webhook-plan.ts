@@ -7,7 +7,9 @@ export const KNOWN_GWB_BASE_URLS = [
 /** A webhook as returned by the GitHub API, reduced to the fields used for planning. */
 interface HookLike {
   id: number
-  config: { url?: string }
+  active: boolean
+  events: string[]
+  config: { url?: string; content_type?: string }
 }
 
 /**
@@ -46,13 +48,12 @@ export function filterTargetRepositories<
 }
 
 /**
- * Classifies the webhooks of one repository as legacy or stale and tells whether a current one is registered.
- * Legacy hooks are always reported; stale hooks are only reported in FULL_URL mode
- * when no exact match exists. `applyWebhookPlan` decides how they are updated, deleted or replaced.
+ * Classifies legacy and stale webhooks and identifies a matching webhook that needs reconciliation.
+ * Legacy hooks are always reported; stale hooks are reported in FULL_URL mode when no exact match exists.
  * The returned arrays hold the input objects in input order.
  * @param hooks - The repository's existing webhooks
  * @param options - `url` is the full webhook URL, `baseUrl` the GWB base URL
- * @returns The legacy and stale hooks, whether a current webhook is registered, and whether one must be created
+ * @returns The legacy and stale hooks, a matching hook to update, and registration status
  * @throws {TypeError} If `options.baseUrl` is not a valid URL
  */
 export function planWebhookActions<T extends HookLike>(
@@ -62,6 +63,7 @@ export function planWebhookActions<T extends HookLike>(
   legacyHooks: T[]
   alreadyRegistered: boolean
   staleHooks: T[]
+  hookToUpdate?: T
   shouldCreate: boolean
 } {
   const { url, baseUrl, checkMode } = options
@@ -85,14 +87,21 @@ export function planWebhookActions<T extends HookLike>(
   const legacyHookIds = new Set(legacyHooks.map((hook) => hook.id))
   const remainingHooks = hooks.filter((hook) => !legacyHookIds.has(hook.id))
 
-  const alreadyRegistered = remainingHooks.some((hook) =>
+  const matchingHooks = remainingHooks.filter((hook) =>
     checkMode === 'FULL_URL'
       ? hook.config.url === url
       : hook.config.url?.startsWith(baseUrl)
   )
+  const alreadyRegistered = matchingHooks.some(
+    (hook) =>
+      hook.active &&
+      hook.events.includes('*') &&
+      hook.config.content_type === 'json'
+  )
+  const hookToUpdate = alreadyRegistered ? undefined : matchingHooks[0]
 
   const staleHooks =
-    checkMode === 'FULL_URL' && !alreadyRegistered
+    checkMode === 'FULL_URL' && matchingHooks.length === 0
       ? remainingHooks.filter(
           (hook) =>
             hook.config.url?.startsWith(baseUrl) && hook.config.url !== url
@@ -103,6 +112,7 @@ export function planWebhookActions<T extends HookLike>(
     legacyHooks,
     alreadyRegistered,
     staleHooks,
-    shouldCreate: !alreadyRegistered,
+    ...(hookToUpdate && { hookToUpdate }),
+    shouldCreate: !alreadyRegistered && !hookToUpdate,
   }
 }
