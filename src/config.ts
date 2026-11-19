@@ -24,10 +24,10 @@ export type ConfigError =
 
 /**
  * Builds the configuration from environment variables.
- * Checks run in this order: required variables, `GWB_BASE_URL` validity, `GWB_CHECK_MODE`.
+ * Checks run in this order: required variables, `GWB_BASE_URL` validity, validity of the combined webhook URL, `GWB_CHECK_MODE`.
  * @param env - The environment variables (normally `process.env`)
  * @returns The configuration, or the first error found
- * @throws {TypeError} If `GWB_BASE_URL` is not a valid URL
+ * @throws {TypeError} If `GWB_BASE_URL` or the webhook URL built from it is not a valid URL
  */
 export function loadConfig(
   env: NodeJS.ProcessEnv
@@ -57,6 +57,13 @@ export function loadConfig(
 
   if (!URL.canParse(baseUrl)) {
     throw new TypeError(`GWB_BASE_URL is not a valid URL: "${baseUrl}"`)
+  }
+
+  if (!URL.canParse(url)) {
+    const maskedUrl = `${baseUrl}${path}${query}`.replace('{url}', () => '***')
+    throw new TypeError(
+      `Webhook URL built from GWB_BASE_URL, GWB_PATH and GWB_QUERY is not a valid URL: "${maskedUrl}"`
+    )
   }
 
   const checkMode = env.GWB_CHECK_MODE ?? 'BASE_URL'

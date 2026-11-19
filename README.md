@@ -46,17 +46,17 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
   - Choices: `BASE_URL`, `FULL_URL`
   - Default: `BASE_URL`
   - `BASE_URL`: A webhook whose URL starts with `GWB_BASE_URL` counts as already registered, and the repository is skipped.
-  - `FULL_URL`: Only a webhook whose URL equals the full generated URL counts as registered. If there is none, webhooks that start with `GWB_BASE_URL` but differ from the full URL are deleted and a new one is created.
+  - `FULL_URL`: Only a webhook whose URL equals the full generated URL counts as registered. If there is none, the first webhook that starts with `GWB_BASE_URL` but differs from the full URL is updated in place to the full URL, and any further such webhooks are deleted after the update succeeded. A new webhook is created only when there is no such webhook.
 
-The webhook URL is `GWB_BASE_URL` + `GWB_PATH` + `GWB_QUERY`.
+The webhook URL is `GWB_BASE_URL` + `GWB_PATH` + `GWB_QUERY`. The script stops before calling the GitHub API if the resulting URL is not a valid URL.
 
 The script logs the configuration at startup. `PERSONAL_ACCESS_TOKEN`, `WEBHOOK_SECRET` and `DISCORD_WEBHOOK_URL` are logged only as set (✅) or unset (❌), and the Discord webhook URL embedded in the generated URL is masked as `***`. The log also contains the names of the processed private repositories, so it is publicly readable when the script runs in the GitHub Actions of a repository that is public.
 
 ## Legacy webhook migration
 
-If a repository has a webhook pointing to a previously known GitHub Webhook Bridge host (e.g. the old `https://github-webhook-bridge.vercel.app/` hosting), it is detected and deleted, and a webhook is then created against the current `GWB_BASE_URL` (or left as is if one already exists there). This migration runs regardless of `GWB_CHECK_MODE`.
+If a repository has a webhook pointing to a previously known GitHub Webhook Bridge host (e.g. the old `https://github-webhook-bridge.vercel.app/` hosting), it is detected and updated in place to the current webhook URL (or deleted if a webhook already exists at the current `GWB_BASE_URL`). Old webhooks are never deleted before their replacement has been updated or created, so a failed update or creation leaves them untouched. If a delete fails after a successful update, the run exits with an error: leftover legacy webhooks are removed by the next run, but leftover stale webhooks (`FULL_URL` mode) must be deleted manually. This migration runs regardless of `GWB_CHECK_MODE`.
 
-The set of known hosts (`KNOWN_GWB_BASE_URLS` in `src/main.ts`) is hardcoded. If you explicitly set `GWB_BASE_URL` to a known host other than the default, webhooks pointing to the other known hosts are treated as legacy and removed.
+The set of known hosts (`KNOWN_GWB_BASE_URLS` in `src/webhook-plan.ts`) is hardcoded. If you explicitly set `GWB_BASE_URL` to a known host other than the default, webhooks pointing to the other known hosts are treated as legacy and migrated as described above.
 
 ## License
 

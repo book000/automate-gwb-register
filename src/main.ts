@@ -1,12 +1,9 @@
 import { Octokit } from '@octokit/rest'
 import { Logger } from '@book000/node-utils'
+import { applyWebhookPlan } from './apply-webhook-plan'
 import { loadConfig } from './config'
 import { processEach } from './process-each'
-import {
-  filterTargetRepositories,
-  getHookOrigin,
-  planWebhookActions,
-} from './webhook-plan'
+import { filterTargetRepositories, planWebhookActions } from './webhook-plan'
 
 async function main() {
   const logger = Logger.configure('main')
@@ -83,44 +80,20 @@ async function main() {
 
       const plan = planWebhookActions(hooks, { url, baseUrl, checkMode })
 
-      for (const hook of plan.legacyHooks) {
-        logger.info(
-          `🚮 Remove legacy webhook (hook_id=${hook.id}, origin=${getHookOrigin(hook.config.url)})`
-        )
-        await octokit.rest.repos.deleteWebhook({
-          owner: repo.owner.login,
-          repo: repo.name,
-          hook_id: hook.id,
-        })
-      }
-
-      if (plan.alreadyRegistered) {
-        logger.info('⏭️ Webhook already exists, skip')
-        return
-      }
-
-      for (const hook of plan.staleHooks) {
-        logger.info(`🚮 Remove webhook (hook_id=${hook.id})`)
-        await octokit.rest.repos.deleteWebhook({
-          owner: repo.owner.login,
-          repo: repo.name,
-          hook_id: hook.id,
-        })
-      }
-
-      await octokit.rest.repos.createWebhook({
-        owner: repo.owner.login,
-        repo: repo.name,
-        name: 'web',
-        config: {
-          url,
-          content_type: 'json',
-          secret: webhookSecret,
+      await applyWebhookPlan(
+        {
+          updateWebhook: (params) =>
+            octokit.rest.repos.updateWebhook({ ...params }),
+          createWebhook: (params) =>
+            octokit.rest.repos.createWebhook({ ...params }),
+          deleteWebhook: (params) =>
+            octokit.rest.repos.deleteWebhook({ ...params }),
         },
-        events: ['*'],
-      })
-
-      logger.info('🚀 Webhook created')
+        { owner: repo.owner.login, repo: repo.name },
+        plan,
+        { url, secret: webhookSecret },
+        logger
+      )
     }
   )
 

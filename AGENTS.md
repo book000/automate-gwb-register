@@ -11,7 +11,7 @@ Guidance for AI coding agents and contributors. `CLAUDE.md` imports this file, a
 
 ## Overview
 
-A batch script that registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks (forwarding to Discord) on all non-archived, non-fork repositories that the user of `PERSONAL_ACCESS_TOKEN` can access (own public and private repositories, plus collaborator and organization repositories) and on which the user has admin permission. It deletes and creates webhooks on real repositories, so never run it against real credentials while developing. See `README.md` for the environment variables, `GWB_CHECK_MODE` and legacy webhook migration.
+A batch script that registers [github-webhook-bridge](https://github.com/book000/github-webhook-bridge) webhooks (forwarding to Discord) on all non-archived, non-fork repositories that the user of `PERSONAL_ACCESS_TOKEN` can access (own public and private repositories, plus collaborator and organization repositories) and on which the user has admin permission. It updates, creates and deletes webhooks on real repositories, so never run it against real credentials while developing. See `README.md` for the environment variables, `GWB_CHECK_MODE` and legacy webhook migration.
 
 ## Commands
 
@@ -28,10 +28,11 @@ Unit tests use vitest and live next to the modules as `src/*.test.ts`; run them 
 
 ## Structure
 
-- `src/main.ts`: the entry point (Octokit calls for listing repositories and creating/deleting webhooks, and logging).
+- `src/main.ts`: the entry point (Octokit calls for listing repositories and calling `applyWebhookPlan` for each repository, and logging).
 - `src/config.ts`: `loadConfig`, which validates environment variables and builds the webhook URL.
-- `src/webhook-plan.ts`: pure decision logic (`planWebhookActions`, `filterTargetRepositories`, `getHookOrigin`) that decides which webhooks to delete or create.
+- `src/webhook-plan.ts`: pure decision logic (`planWebhookActions`, `filterTargetRepositories`, `getHookOrigin`) that classifies existing webhooks as legacy or stale.
 - `src/process-each.ts`: `processEach`, which runs a handler sequentially per item, continues after failures and returns them.
+- `src/apply-webhook-plan.ts`: `applyWebhookPlan`, which applies a plan through an injected client (updates the first legacy/stale hook in place, creates when none exists, and deletes old hooks only after that succeeded).
 - `.github/workflows/auto-register.yml`: runs `pnpm start` hourly with repository secrets.
 - `scripts/load-env.ps1`: loads a `.env` file into the current PowerShell session. The app itself does not read `.env`.
 
@@ -42,6 +43,7 @@ Unit tests use vitest and live next to the modules as `src/*.test.ts`; run them 
 - Keep log messages consistent with the existing emoji prefix style.
 - Compare webhook hosts by `URL().origin` so that trailing slashes do not matter, and never treat the current `GWB_BASE_URL` host as legacy.
 - Failures must reach the exit status: any setup or per-repository error sets `process.exitCode = 1`, and `✅ Done` is logged only when nothing failed. `@book000/node-utils` only logs unhandled rejections, so never rely on it for the exit code.
+- Never delete a webhook before its replacement has been updated or created; keep all webhook write ordering in `applyWebhookPlan`.
 - Credentials and webhook URLs must not be logged in plain text: startup logs show `DISCORD_WEBHOOK_URL`, `WEBHOOK_SECRET` and `PERSONAL_ACCESS_TOKEN` only as set/unset, and the embedded Discord webhook URL is masked as `***`. Do not add log lines that output them.
 - When behavior or environment variables change, update `README.md` and this file.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/); branches follow [Conventional Branch](https://conventional-branch.github.io) short form (`feat/...`, `fix/...`).

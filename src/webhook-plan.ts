@@ -46,12 +46,13 @@ export function filterTargetRepositories<
 }
 
 /**
- * Decides which webhooks of one repository to delete and whether to create one.
- * Legacy hooks are always deleted; stale hooks are only reported in FULL_URL mode
- * when no exact match exists. The returned arrays hold the input objects in input order.
+ * Classifies the webhooks of one repository as legacy or stale and tells whether a current one is registered.
+ * Legacy hooks are always reported; stale hooks are only reported in FULL_URL mode
+ * when no exact match exists. `applyWebhookPlan` decides how they are updated, deleted or replaced.
+ * The returned arrays hold the input objects in input order.
  * @param hooks - The repository's existing webhooks
  * @param options - `url` is the full webhook URL, `baseUrl` the GWB base URL
- * @returns The hooks to delete and whether a new webhook must be created
+ * @returns The legacy and stale hooks, whether a current webhook is registered, and whether one must be created
  * @throws {TypeError} If `options.baseUrl` is not a valid URL
  */
 export function planWebhookActions<T extends HookLike>(
@@ -69,7 +70,7 @@ export function planWebhookActions<T extends HookLike>(
     KNOWN_GWB_BASE_URLS.map((knownBaseUrl) => new URL(knownBaseUrl).origin)
   )
 
-  // A webhook on a known host other than the current baseUrl is legacy and is always deleted,
+  // A webhook on a known host other than the current baseUrl is legacy and is always reported,
   // regardless of GWB_CHECK_MODE.
   const legacyHooks = hooks.filter((hook) => {
     const hookOrigin = getHookOrigin(hook.config.url)
@@ -80,7 +81,7 @@ export function planWebhookActions<T extends HookLike>(
     )
   })
 
-  // The checks below use only the hooks that were not removed as legacy
+  // The checks below use only the hooks that were not reported as legacy
   const legacyHookIds = new Set(legacyHooks.map((hook) => hook.id))
   const remainingHooks = hooks.filter((hook) => !legacyHookIds.has(hook.id))
 

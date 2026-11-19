@@ -138,6 +138,43 @@ describe('loadConfig', () => {
     )
   })
 
+  it('throws a masked TypeError when the combined webhook URL is invalid', () => {
+    const env = {
+      ...REQUIRED,
+      GWB_BASE_URL: 'https://example.test',
+      GWB_PATH: ':99999',
+    }
+    expect(() => loadConfig(env)).toThrow(
+      new TypeError(
+        'Webhook URL built from GWB_BASE_URL, GWB_PATH and GWB_QUERY is not a valid URL: "https://example.test:99999?url=***"'
+      )
+    )
+  })
+
+  it('reports an invalid combined webhook URL before an invalid GWB_CHECK_MODE', () => {
+    expect(() =>
+      loadConfig({
+        ...REQUIRED,
+        GWB_BASE_URL: 'https://example.test',
+        GWB_PATH: ':99999',
+        GWB_CHECK_MODE: 'INVALID',
+      })
+    ).toThrow(/is not a valid URL: "https:\/\/example\.test:99999\?url=\*\*\*"/)
+  })
+
+  it('returns missing-required without throwing even if the combined URL would be invalid', () => {
+    expect(
+      loadConfig({ GWB_BASE_URL: 'https://example.test', GWB_PATH: ':99999' })
+    ).toEqual({
+      ok: false,
+      errors: {
+        kind: 'missing-required',
+        discordWebhookUrl: false,
+        personalAccessToken: false,
+      },
+    })
+  })
+
   it('reports an invalid GWB_BASE_URL before an invalid GWB_CHECK_MODE', () => {
     expect(() =>
       loadConfig({
