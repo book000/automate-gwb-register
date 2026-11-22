@@ -40,6 +40,49 @@ describe('getHookOrigin', () => {
 })
 
 describe('planWebhookActions', () => {
+  it.each(['BASE_URL', 'FULL_URL'] as const)(
+    'uses parsed origin and path boundaries in %s mode',
+    (checkMode) => {
+      const baseUrl = 'https://BRIDGE.example.test:443/service/'
+      const url = 'https://bridge.example.test/service?url=new'
+      const inside = [
+        hook(1, 'https://bridge.example.test/service?url=old'),
+        hook(2, 'https://bridge.example.test/service/child?url=old'),
+      ]
+      const outside = [
+        hook(3, 'https://bridge.example.test.evil.invalid/service'),
+        hook(4, 'https://bridge.example.test/service-other'),
+        hook(5, 'https://bridge.example.test:444/service'),
+        hook(6, 'https://bridge.example.test/other/../service-other'),
+      ]
+      const plan = planWebhookActions([...outside, ...inside], {
+        url,
+        baseUrl,
+        checkMode,
+      })
+      expect(plan.alreadyRegistered).toBe(checkMode === 'BASE_URL')
+      expect(plan.staleHooks).toEqual(checkMode === 'FULL_URL' ? inside : [])
+      expect(plan.legacyHooks).toEqual([])
+    }
+  )
+
+  it.each(['BASE_URL', 'FULL_URL'] as const)(
+    'does not select lookalike hosts with a root base missing its slash in %s mode',
+    (checkMode) => {
+      const baseUrl = 'https://bridge.example.test'
+      const plan = planWebhookActions(
+        [
+          hook(1, `${baseUrl}.other.invalid`),
+          hook(2, `${baseUrl}.evil.invalid`),
+        ],
+        { url: `${baseUrl}/?url=new`, baseUrl, checkMode }
+      )
+      expect(plan.hookToUpdate).toBeUndefined()
+      expect(plan.alreadyRegistered).toBe(false)
+      expect(plan.staleHooks).toEqual([])
+    }
+  )
+
   it('reports no existing hooks when there are no hooks', () => {
     for (const checkMode of ['BASE_URL', 'FULL_URL'] as const) {
       expect(

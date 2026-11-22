@@ -66,7 +66,20 @@ export function planWebhookActions<T extends HookLike>(
   hookToUpdate?: T
 } {
   const { url, baseUrl, checkMode } = options
-  const baseUrlOrigin = new URL(baseUrl).origin
+  const parsedBaseUrl = new URL(baseUrl)
+  const baseUrlOrigin = parsedBaseUrl.origin
+  const basePath = parsedBaseUrl.pathname.replace(/\/+$/, '')
+  const isUnderBaseUrl = (hookUrl: string | undefined): boolean => {
+    if (!hookUrl || baseUrlOrigin === 'null' || !URL.canParse(hookUrl)) {
+      return false
+    }
+    const parsedHookUrl = new URL(hookUrl)
+    return (
+      parsedHookUrl.origin === baseUrlOrigin &&
+      (parsedHookUrl.pathname === basePath ||
+        parsedHookUrl.pathname.startsWith(`${basePath}/`))
+    )
+  }
   const knownOrigins = new Set(
     KNOWN_GWB_BASE_URLS.map((knownBaseUrl) => new URL(knownBaseUrl).origin)
   )
@@ -89,7 +102,7 @@ export function planWebhookActions<T extends HookLike>(
   const matchingHooks = remainingHooks.filter((hook) =>
     checkMode === 'FULL_URL'
       ? hook.config.url === url
-      : hook.config.url?.startsWith(baseUrl)
+      : isUnderBaseUrl(hook.config.url)
   )
   const alreadyRegistered = matchingHooks.some(
     (hook) =>
@@ -102,8 +115,7 @@ export function planWebhookActions<T extends HookLike>(
   const staleHooks =
     checkMode === 'FULL_URL' && matchingHooks.length === 0
       ? remainingHooks.filter(
-          (hook) =>
-            hook.config.url?.startsWith(baseUrl) && hook.config.url !== url
+          (hook) => isUnderBaseUrl(hook.config.url) && hook.config.url !== url
         )
       : []
 
