@@ -40,7 +40,7 @@ describe('getHookOrigin', () => {
 })
 
 describe('planWebhookActions', () => {
-  it('creates a webhook when there are no hooks', () => {
+  it('reports no existing hooks when there are no hooks', () => {
     for (const checkMode of ['BASE_URL', 'FULL_URL'] as const) {
       expect(
         planWebhookActions([], { url: FULL_URL, baseUrl: BASE_URL, checkMode })
@@ -48,7 +48,6 @@ describe('planWebhookActions', () => {
         legacyHooks: [],
         alreadyRegistered: false,
         staleHooks: [],
-        shouldCreate: true,
       })
     }
   })
@@ -65,7 +64,6 @@ describe('planWebhookActions', () => {
       legacyHooks: [],
       alreadyRegistered: true,
       staleHooks: [],
-      shouldCreate: false,
     })
   })
 
@@ -88,7 +86,6 @@ describe('planWebhookActions', () => {
         })
         expect(plan.hookToUpdate).toBe(incomplete)
         expect(plan.alreadyRegistered).toBe(false)
-        expect(plan.shouldCreate).toBe(false)
         expect(plan.staleHooks).toEqual([])
       }
     }
@@ -117,7 +114,6 @@ describe('planWebhookActions', () => {
       legacyHooks: [],
       alreadyRegistered: false,
       staleHooks: [],
-      shouldCreate: true,
     })
   })
 
@@ -132,7 +128,6 @@ describe('planWebhookActions', () => {
       legacyHooks: [],
       alreadyRegistered: true,
       staleHooks: [],
-      shouldCreate: false,
     })
   })
 
@@ -145,7 +140,6 @@ describe('planWebhookActions', () => {
       checkMode: 'FULL_URL',
     })
     expect(result.alreadyRegistered).toBe(false)
-    expect(result.shouldCreate).toBe(true)
     expect(result.staleHooks).toEqual([stale])
     expect(result.staleHooks[0]).toBe(stale)
   })
@@ -162,7 +156,6 @@ describe('planWebhookActions', () => {
       legacyHooks: [],
       alreadyRegistered: true,
       staleHooks: [],
-      shouldCreate: false,
     })
   })
 
@@ -177,7 +170,7 @@ describe('planWebhookActions', () => {
     ).toEqual([])
   })
 
-  it('lists a legacy hook and still creates in both modes', () => {
+  it('lists a legacy hook when no current hook exists in both modes', () => {
     const legacy = hook(1, LEGACY_URL)
     for (const checkMode of ['BASE_URL', 'FULL_URL'] as const) {
       const result = planWebhookActions([legacy], {
@@ -189,7 +182,6 @@ describe('planWebhookActions', () => {
         legacyHooks: [legacy],
         alreadyRegistered: false,
         staleHooks: [],
-        shouldCreate: true,
       })
       expect(result.legacyHooks[0]).toBe(legacy)
     }
@@ -209,7 +201,6 @@ describe('planWebhookActions', () => {
         legacyHooks: [legacy],
         alreadyRegistered: true,
         staleHooks: [],
-        shouldCreate: false,
       })
     }
   })
@@ -262,7 +253,6 @@ describe('planWebhookActions', () => {
         legacyHooks: [],
         alreadyRegistered: false,
         staleHooks: [],
-        shouldCreate: true,
       })
     }
   })

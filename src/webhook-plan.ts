@@ -64,7 +64,6 @@ export function planWebhookActions<T extends HookLike>(
   alreadyRegistered: boolean
   staleHooks: T[]
   hookToUpdate?: T
-  shouldCreate: boolean
 } {
   const { url, baseUrl, checkMode } = options
   const baseUrlOrigin = new URL(baseUrl).origin
@@ -113,6 +112,5 @@ export function planWebhookActions<T extends HookLike>(
     alreadyRegistered,
     staleHooks,
     ...(hookToUpdate && { hookToUpdate }),
-    shouldCreate: !alreadyRegistered && !hookToUpdate,
   }
 }
