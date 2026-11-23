@@ -42,6 +42,7 @@ Unit tests use vitest and live next to the modules as `src/*.test.ts`; run them 
 - Avoid `any`. Do not enable `skipLibCheck` in `tsconfig.json`.
 - Keep log messages consistent with the existing emoji prefix style.
 - Compare webhook hosts by `URL().origin` so that trailing slashes do not matter, and never treat the current `GWB_BASE_URL` host as legacy.
+- Select current-base webhooks only when their parsed origins match and their paths equal the base path or are slash-delimited descendants; ignore trailing slashes on the base path.
 - Reconcile a matching webhook if it is inactive, does not subscribe to all events, or does not use JSON. In `BASE_URL` mode, preserve its existing URL when updating it. Updates use the configured `WEBHOOK_SECRET`.
 - Failures must reach the exit status: any setup or per-repository error sets `process.exitCode = 1`, and `✅ Done` is logged only when nothing failed. `@book000/node-utils` only logs unhandled rejections, so never rely on it for the exit code.
 - Never delete a webhook before its replacement has been updated or created; keep all webhook write ordering in `applyWebhookPlan`.

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { applyWebhookPlan } from './apply-webhook-plan'
+import { planWebhookActions } from './webhook-plan'
 
 const TARGET = { owner: 'octo', repo: 'repo' }
 const URL_ = 'https://gwb.tomacheese.com/?url=https://example.test/hook'
@@ -29,6 +30,71 @@ const legacy1 = hook(1, 'https://github-webhook-bridge.vercel.app/?url=old')
 const stale2 = hook(2, 'https://gwb.tomacheese.com/?url=other')
 
 describe('applyWebhookPlan', () => {
+  it.each(['BASE_URL', 'FULL_URL'] as const)(
+    'does not mutate lookalike hosts or sibling paths in %s mode',
+    async (checkMode) => {
+      const { client, logger } = setup()
+      const baseUrl = 'https://bridge.example.test/service'
+      const url = `${baseUrl}?url=new`
+      const hooks = [
+        'https://bridge.example.test.evil.invalid/service',
+        'https://bridge.example.test/service-other',
+      ].map((hookUrl, index) => ({
+        ...hook(index + 1, hookUrl),
+        active: true,
+        events: ['*'],
+        config: { url: hookUrl, content_type: 'json' },
+      }))
+      await applyWebhookPlan(
+        client,
+        TARGET,
+        planWebhookActions(hooks, { url, baseUrl, checkMode }),
+        { url, secret: undefined },
+        logger
+      )
+      expect(client.createWebhook).toHaveBeenCalledOnce()
+      expect(client.updateWebhook).not.toHaveBeenCalled()
+      expect(client.deleteWebhook).not.toHaveBeenCalled()
+    }
+  )
+
+  it('updates an in-boundary stale hook before deleting another', async () => {
+    const { client, logger } = setup()
+    const baseUrl = 'https://bridge.example.test/service/'
+    const url = `${baseUrl}?url=new`
+    const hooks = [
+      'https://bridge.example.test/service?url=old',
+      'https://bridge.example.test/service/child?url=old',
+      'https://bridge.example.test/service-other',
+    ].map((hookUrl, index) => ({
+      ...hook(index + 1, hookUrl),
+      active: true,
+      events: ['*'],
+      config: { url: hookUrl, content_type: 'json' },
+    }))
+    await applyWebhookPlan(
+      client,
+      TARGET,
+      planWebhookActions(hooks, { url, baseUrl, checkMode: 'FULL_URL' }),
+      { url, secret: undefined },
+      logger
+    )
+    expect(client.updateWebhook).toHaveBeenCalledExactlyOnceWith({
+      ...TARGET,
+      hook_id: 1,
+      config: { url, secret: undefined, content_type: 'json' },
+      events: ['*'],
+      active: true,
+    })
+    expect(client.deleteWebhook).toHaveBeenCalledExactlyOnceWith({
+      ...TARGET,
+      hook_id: 2,
+    })
+    expect(client.updateWebhook.mock.invocationCallOrder[0]).toBeLessThan(
+      client.deleteWebhook.mock.invocationCallOrder[0]
+    )
+  })
+
   it('creates a webhook when there are no old hooks', async () => {
     const { client, logger, logs } = setup()
     await applyWebhookPlan(

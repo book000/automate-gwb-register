@@ -45,8 +45,8 @@ The scheduled workflow `.github/workflows/auto-register.yml` runs it hourly (and
 - `GWB_CHECK_MODE`: How an existing webhook is matched.
   - Choices: `BASE_URL`, `FULL_URL`
   - Default: `BASE_URL`
-  - `BASE_URL`: A webhook whose URL starts with `GWB_BASE_URL` matches. If its delivery settings need repair, its existing URL is preserved.
-  - `FULL_URL`: Only a webhook whose URL equals the full generated URL matches. If there is none, the first webhook that starts with `GWB_BASE_URL` but differs from the full URL is updated in place to the full URL, and any further such webhooks are deleted after the update succeeded. A new webhook is created only when there is no such webhook.
+  - `BASE_URL`: A webhook matches when its parsed origin equals the `GWB_BASE_URL` origin and its path is the base path or a slash-delimited descendant. Trailing slashes on the base path are ignored. Query strings and fragments are ignored for this check. If its delivery settings need repair, its existing URL is preserved.
+  - `FULL_URL`: Only a webhook whose URL equals the full generated URL matches. If there is none, the first webhook under the same origin and base path as described above is updated in place to the full URL, and any further such webhooks are deleted after the update succeeds. A new webhook is created only when there is no such webhook.
 
 A matching webhook is updated in place if it is inactive, does not subscribe to all events (`*`), or does not use JSON. When multiple hooks match, a fully configured one is preferred. Updates use the configured `WEBHOOK_SECRET`; GitHub removes any previous secret if it is unset. Legacy hooks are removed only after a matching webhook is ready.
 
